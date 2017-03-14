@@ -1,5 +1,5 @@
 {
-  "name": "wasm-container",
+  "name": "prima-wasm-container",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
@@ -9,13 +9,18 @@
     "lint": "standard",
     "test": "node --harmony ./tests/index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "mjbecze <mjbecze@gmail.com>",
+  "license": "MPL-2.0",
   "standard": {
     "globals": [
       "WebAssembly"
     ]
   },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "prima"
+  ],
   "devDependencies": {
     "istanbul": "^1.1.0-alpha.1",
     "standard": "^9.0.1",
