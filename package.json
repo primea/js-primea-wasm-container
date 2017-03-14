@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "coverage": "node --harmony ./node_modules/istanbul/lib/cli.js cover ./tests/index.js",
+    "coverage": "node --expose-wasm --harmony ./node_modules/istanbul/lib/cli.js cover ./tests/index.js",
     "coveralls": "npm run coverage && coveralls <coverage/lcov.info",
     "lint": "standard",
-    "test": "node --harmony ./tests/index.js"
+    "test": "node --expose-wasm --harmony ./tests/index.js"
   },
   "author": "mjbecze <mjbecze@gmail.com>",
   "license": "MPL-2.0",
