@@ -27,10 +27,10 @@ module.exports = class WasmContainer {
         const props = Object.getOwnPropertyNames(Import.prototype)
 
         // bind the methods to the correct 'this'
-        importMap[name] = {}
         for (const prop of props) {
-          importMap[name][prop] = newInterface[prop].bind(newInterface)
+          newInterface[prop] = newInterface[prop].bind(newInterface)
         }
+        importMap[name] = newInterface
       }
       return importMap
     }
@@ -42,9 +42,9 @@ module.exports = class WasmContainer {
         /**
          * adds an aync operation to the operations queue
          */
-        pushOpsQueue: (promise, callbackIndex) => {
+        pushOpsQueue: (promise, callbackIndex, intefaceCallback) => {
           this._opsQueue = Promise.all([this._opsQueue, promise]).then(values => {
-            const result = values.pop()
+            const result = intefaceCallback(values.pop())
             instance.exports.callback.get(callbackIndex)(result)
           })
         },

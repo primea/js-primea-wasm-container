@@ -72,7 +72,7 @@ tape('async wasm interface test', async t => {
       const opPromise = new Promise((resolve, reject) => {
         resolve()
       })
-      this.opts.vm.pushOpsQueue(opPromise, cbOffset)
+      this.opts.vm.pushOpsQueue(opPromise, cbOffset, () => {})
     }
 
     done () {
