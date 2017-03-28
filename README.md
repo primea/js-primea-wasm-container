@@ -6,6 +6,8 @@
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)  
 
 # install
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/primea/js-primea-wasm-container.svg)](https://greenkeeper.io/)
 `npm install prima-wasm-container`
 
 # SYNOPSIS 
