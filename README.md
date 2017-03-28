@@ -1,12 +1,11 @@
-
-[![NPM Package](https://img.shields.io/npm/v/prima-wasm-container.svg?style=flat-square)](https://www.npmjs.org/package/prima-wasm-container)
-[![Build Status](https://img.shields.io/travis/ewasm/prima-wasm-container.svg?branch=master&style=flat-square)](https://travis-ci.org/ewasm/prima-wasm-container)
-[![Coverage Status](https://img.shields.io/coveralls/ewasm/prima-wasm-container.svg?style=flat-square)](https://coveralls.io/r/ewasm/prima-wasm-container)
+[![NPM Package](https://img.shields.io/npm/v/primea-wasm-container.svg?style=flat-square)](https://www.npmjs.org/package/primea-wasm-container)
+[![Build Status](https://img.shields.io/travis/ewasm/primea-wasm-container.svg?branch=master&style=flat-square)](https://travrs-ci.org/ewasm/primea-wasm-container)
+[![Coverage Status](https://img.shields.io/coveralls/ewasm/primea-wasm-container.svg?style=flat-square)](https://coveralls.io/r/ewasm/primea-wasm-container)
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)  
 
 # install
-`npm install prima-wasm-container`
+`npm install primea-wasm-container`
 
 # SYNOPSIS 
 This implements a wasm container for the ewasm-kernel
