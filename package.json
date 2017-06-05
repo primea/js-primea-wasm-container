@@ -24,7 +24,7 @@
   "devDependencies": {
     "ipfs": "^0.24.1",
     "istanbul": "^1.1.0-alpha.1",
-    "primea-hypervisor": "0.0.0",
+    "primea-hypervisor": "0.0.1",
     "standard": "^10.0.0",
     "tape": "^4.6.3"
   }
