@@ -1,0 +1,20 @@
+(module
+  (type $FUNCSIG$ii (func (param i32) (result i32)))
+  (type $FUNCSIG$vii (func (param i32 i32)))
+  (import "test" "equals" (func $equals (param i32 i32)))
+  (import "env" "readMem" (func $readMem (param i32) (result i32)))
+  (table 0 anyfunc)
+  (memory $0 1)
+  (data (i32.const 16) "asm\01\00")
+  (export "memory" (memory $0))
+  (export "main" (func $main))
+  (func $main (result i32)
+    (call $equals
+      (call $readMem
+        (i32.const 16)
+      )
+      (i32.const 97)
+    )
+    (i32.const 0)
+  )
+)

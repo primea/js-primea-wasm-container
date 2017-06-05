@@ -2,8 +2,10 @@ const ReferanceMap = require('./referanceMap.js')
 
 module.exports = class WasmContainer {
   /**
-   * The interface API is the api the exposed to interfaces. All queries about
-   * the enviroment and call to the kernel go through this API
+   * The wasm container runs wasm code and provides a basic API for wasm
+   * interfaces for interacting with the exoInterface
+   * @param {object} exoInterface - the exoInterface instance
+   * @param {object} imports - a map of imports to expose to the wasm binary
    */
   constructor (exoInterface, imports) {
     this.exoInterface = exoInterface
@@ -12,7 +14,9 @@ module.exports = class WasmContainer {
   }
 
   /**
-   * Runs the core VM with a given environment and imports
+   * Runs the wasm VM given a message
+   * @param {object} message
+   * @returns {Promise} a promise that resolves once the compuation is finished
    */
   async run (message) {
     /**
@@ -35,14 +39,14 @@ module.exports = class WasmContainer {
 
     const result = await WebAssembly.instantiate(this.exoInterface.state['/'].code, importMap)
     this.instance = result.instance
-    if (this.instance.exports.main) {
-      this.instance.exports.main()
-    }
+    // runs the wasm code
+    this.instance.exports.main()
     return this.onDone()
   }
 
   /**
    * returns a promise that resolves when the wasm instance is done running
+   * @returns {Promise}
    */
   async onDone () {
     let prevOps
@@ -53,20 +57,45 @@ module.exports = class WasmContainer {
     this.referanceMap.clear()
   }
 
+  /**
+   * Pushed an async operation to the a promise queue that
+   * @returns {Promise} the returned promise resolves in the order the intail
+   * operation was pushed to the queue
+   */
   pushOpsQueue (promise) {
     this._opsQueue = Promise.all([this._opsQueue, promise])
     return this._opsQueue
   }
 
-  get memory () {
-    return this.instance.exports.memory.buffer
+  /**
+   * executes a callback given an index in the exported callback container
+   * @param {integer} cb
+   * @param {*} val - a value to return to the callback function
+   */
+  execute (cb, val) {
+    this.instance.exports.table.get(cb)(val)
   }
 
+  /**
+   * returns a section of memory from the wasm instance
+   * @param {integer} offset
+   * @param {integer} length
+   * @returns {Uint8Array}
+   */
   getMemory (offset, length) {
-    return new Uint8Array(this.memory, offset, length)
+    return new Uint8Array(this.instance.exports.memory.buffer, offset, length)
   }
 
+  /**
+   * creates the intail state for a wasm contract
+   * @param {ArrayBuffer} wasm - the wasm code
+   * @returns {Object}
+   */
   static createState (wasm) {
+    if (!WebAssembly.validate(wasm)) {
+      throw new Error('invalid wasm binary')
+    }
+
     return {
       nonce: [0],
       ports: {},
