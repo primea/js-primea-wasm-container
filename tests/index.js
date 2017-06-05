@@ -100,10 +100,9 @@ node.on('ready', () => {
 
     try {
       await hypervisor.createInstance('wasm', {
-        '/': WasmContainer.createState(new Buffer([0x00]))
+        '/': WasmContainer.createState(Buffer.from([0x00]))
       })
     } catch (e) {
-      console.log(e)
       t.true(true, 'should trap on invalid wasm')
     }
   })
