@@ -1,5 +1,5 @@
 module.exports = function (t) {
-  return class TeInterface {
+  return class TestInterface {
     constructor () {
       this.t = t
     }

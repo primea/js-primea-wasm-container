@@ -7,10 +7,17 @@ module.exports = class WasmContainer {
    * @param {object} exoInterface - the exoInterface instance
    * @param {object} imports - a map of imports to expose to the wasm binary
    */
-  constructor (exoInterface, imports) {
-    this.exoInterface = exoInterface
+  constructor (kernel, imports) {
+    this.kernel = kernel
     this.imports = imports
     this.referanceMap = new ReferanceMap()
+  }
+
+  async initailize (message) {
+    if (!WebAssembly.validate(this.kernel.state.code)) {
+      throw new Error('invalid wasm binary')
+    }
+    return this._run(message, 'init')
   }
 
   /**
@@ -19,9 +26,11 @@ module.exports = class WasmContainer {
    * @returns {Promise} a promise that resolves once the compuation is finished
    */
   async run (message) {
-    /**
-     * Builds a import map with an array of given interfaces
-     */
+    return this._run(message, 'main')
+  }
+
+  async _run (message, method) {
+    // Builds a import map with an array of given interfaces
     const importMap = {}
     for (const name in this.imports) {
       importMap[name] = {}
@@ -37,10 +46,10 @@ module.exports = class WasmContainer {
       }
     }
 
-    const result = await WebAssembly.instantiate(this.exoInterface.state['/'].code, importMap)
+    const result = await WebAssembly.instantiate(this.kernel.state.code, importMap)
     this.instance = result.instance
     // runs the wasm code
-    this.instance.exports.main()
+    this.instance.exports[method]()
     return this.onDone()
   }
 
@@ -84,22 +93,5 @@ module.exports = class WasmContainer {
    */
   getMemory (offset, length) {
     return new Uint8Array(this.instance.exports.memory.buffer, offset, length)
-  }
-
-  /**
-   * creates the intail state for a wasm contract
-   * @param {ArrayBuffer} wasm - the wasm code
-   * @returns {Object}
-   */
-  static createState (wasm) {
-    if (!WebAssembly.validate(wasm)) {
-      throw new Error('invalid wasm binary')
-    }
-
-    return {
-      nonce: [0],
-      ports: {},
-      code: wasm
-    }
   }
 }

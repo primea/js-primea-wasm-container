@@ -60,37 +60,40 @@ node.on('ready', () => {
     }
   })
 
+  tape('wasm container - main', async t => {
+    t.plan(1)
+    const hypervisor = new Hypervisor(node.dag)
+    const main = fs.readFileSync(`${__dirname}/wasm/main.wasm`)
+    hypervisor.registerContainer('wasm', WasmContainer, {
+      test: testInterface(t)
+    })
+    const instance = await hypervisor.createInstance('wasm', main)
+    instance.run(instance.createMessage())
+  })
+
   tape('wasm container - mem', async t => {
-    t.plan(2)
+    t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
     const readMem = fs.readFileSync(`${__dirname}/wasm/readMem.wasm`)
     hypervisor.registerContainer('wasm', WasmContainer, {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
-    const root = await hypervisor.createInstance('wasm', {
-      '/': WasmContainer.createState(readMem)
-    })
-    const r = await root.run()
-    t.deepEquals(r, {}, 'should have no return value')
+    await hypervisor.createInstance('wasm', readMem)
   })
 
   tape('wasm container - callbacks', async t => {
-    t.plan(2)
+    t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
-    const readMem = fs.readFileSync(`${__dirname}/wasm/callback.wasm`)
+    const callBackWasm = fs.readFileSync(`${__dirname}/wasm/callback.wasm`)
     hypervisor.registerContainer('wasm', WasmContainer, {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
-    const root = await hypervisor.createInstance('wasm', {
-      '/': WasmContainer.createState(readMem)
-    })
-    const r = await root.run()
-    t.deepEquals(r, {}, 'should have no return value')
+    hypervisor.createInstance('wasm', callBackWasm)
   })
 
-  tape('wasm container - invalid', async t => {
+  tape.only('wasm container - invalid', async t => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
     hypervisor.registerContainer('wasm', WasmContainer, {
@@ -98,12 +101,6 @@ node.on('ready', () => {
       test: testInterface(t)
     })
 
-    try {
-      await hypervisor.createInstance('wasm', {
-        '/': WasmContainer.createState(Buffer.from([0x00]))
-      })
-    } catch (e) {
-      t.true(true, 'should trap on invalid wasm')
-    }
+    await hypervisor.createInstance('wasm', Buffer.from([0x00]))
   })
 })
