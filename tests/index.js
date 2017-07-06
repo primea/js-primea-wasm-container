@@ -117,4 +117,45 @@ node.on('ready', () => {
     await hypervisor.createInstance('wasm', message)
     t.equals(rp.destPort.messages[0].data.exception, true)
   })
+
+  tape('initailize', async t => {
+    t.plan(2)
+
+    const callBackWasm = fs.readFileSync(`${__dirname}/wasm/callback.wasm`)
+
+    class ContainerTestInterface {
+      constructor (wasmContainer) {
+        this.wasmContainer = wasmContainer
+      }
+
+      readMem (offset) {
+        return this.wasmContainer.getMemory(offset, 1)
+      }
+
+      async callback (cb) {
+        const promise = new Promise((resolve, reject) => {
+          resolve()
+        })
+        await this.wasmContainer.pushOpsQueue(promise)
+        this.wasmContainer.execute(cb)
+      }
+
+      static initialize (code) {
+        t.equals(code, callBackWasm)
+        return code
+      }
+    }
+
+    const hypervisor = new Hypervisor(node.dag)
+    hypervisor.registerContainer('wasm', WasmContainer, {
+      env: ContainerTestInterface,
+      test: testInterface(t)
+    })
+
+    const message = new Message({
+      data: callBackWasm
+    })
+
+    hypervisor.createInstance('wasm', message)
+  })
 })

@@ -3,19 +3,28 @@ const ReferanceMap = require('./referanceMap.js')
 module.exports = class WasmContainer {
   /**
    * The wasm container runs wasm code and provides a basic API for wasm
-   * interfaces for interacting with the exoInterface
-   * @param {object} exoInterface - the exoInterface instance
-   * @param {object} imports - a map of imports to expose to the wasm binary
+   * interfaces for interacting with the kernel
+   * @param {object} kernel - the kernel instance
+   * @param {object} interfaces - a map of interfaces to expose to the wasm binary
    */
-  constructor (kernel, imports) {
+  constructor (kernel, interfaces) {
     this.kernel = kernel
-    this.imports = imports
+    this.imports = interfaces
     this.referanceMap = new ReferanceMap()
   }
 
   async initialize (message) {
-    if (!WebAssembly.validate(this.kernel.state.code)) {
+    let code = message.data
+    if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
+    } else {
+      for (const name in this.imports) {
+        const interf = this.imports[name]
+        if (interf.initialize) {
+          code = await interf.initialize(code)
+        }
+      }
+      this.kernel.state.code = code
     }
     return this._run(message, 'init')
   }
@@ -25,7 +34,7 @@ module.exports = class WasmContainer {
    * @param {object} message
    * @returns {Promise} a promise that resolves once the compuation is finished
    */
-  async run (message) {
+  run (message) {
     return this._run(message, 'main')
   }
 
