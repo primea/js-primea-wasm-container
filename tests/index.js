@@ -1,6 +1,7 @@
 const tape = require('tape')
 const fs = require('fs')
 const Hypervisor = require('primea-hypervisor')
+const Message = require('primea-message')
 const WasmContainer = require('../index.js')
 const testInterface = require('./testInterface.js')
 const IPFS = require('ipfs')
@@ -67,7 +68,9 @@ node.on('ready', () => {
     hypervisor.registerContainer('wasm', WasmContainer, {
       test: testInterface(t)
     })
-    const instance = await hypervisor.createInstance('wasm', main)
+    const instance = await hypervisor.createInstance('wasm', new Message({
+      data: main
+    }))
     instance.run(instance.createMessage())
   })
 
@@ -79,7 +82,9 @@ node.on('ready', () => {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
-    await hypervisor.createInstance('wasm', readMem)
+    await hypervisor.createInstance('wasm', new Message({
+      data: readMem
+    }))
   })
 
   tape('wasm container - callbacks', async t => {
@@ -90,10 +95,12 @@ node.on('ready', () => {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
-    hypervisor.createInstance('wasm', callBackWasm)
+    hypervisor.createInstance('wasm', new Message({
+      data: callBackWasm
+    }))
   })
 
-  tape.only('wasm container - invalid', async t => {
+  tape('wasm container - invalid', async t => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
     hypervisor.registerContainer('wasm', WasmContainer, {
@@ -101,6 +108,13 @@ node.on('ready', () => {
       test: testInterface(t)
     })
 
-    await hypervisor.createInstance('wasm', Buffer.from([0x00]))
+    const message = new Message({
+      data: Buffer.from([0x00])
+    })
+
+    const rp = message.responsePort = {destPort: {messages: []}}
+
+    await hypervisor.createInstance('wasm', message)
+    t.equals(rp.destPort.messages[0].data.exception, true)
   })
 })

@@ -13,7 +13,7 @@ module.exports = class WasmContainer {
     this.referanceMap = new ReferanceMap()
   }
 
-  async initailize (message) {
+  async initialize (message) {
     if (!WebAssembly.validate(this.kernel.state.code)) {
       throw new Error('invalid wasm binary')
     }
