@@ -7,14 +7,15 @@
   (memory $0 1)
   (data (i32.const 16) "asm\01\00")
   (export "memory" (memory $0))
-  (export "init" (func $init))
-  (func $init (result i32)
+  (export "onCreation" (func $onCreation))
+  (func $onCreation (param $0 i32) (result i32)
+    (local $1 i32)
     (call $equals
       (call $readMem
         (i32.const 16)
       )
       (i32.const 97)
     )
-    (i32.const 0)
+    (get_local $1)
   )
 )

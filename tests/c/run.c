@@ -1,11 +1,11 @@
 extern void equals(int, int);
 
-int init()
+int onCreation(int mgsRef)
 {
   return 0;
 }
 
-int main()
+int onMessage()
 {
   equals(0, 0);
   return 0;

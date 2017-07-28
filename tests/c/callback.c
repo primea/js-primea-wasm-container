@@ -5,7 +5,7 @@ void theCallback(void) {
   equals(0, 0);
 }
 
-int init(void)
+int onCreation(int msgRef)
 {
   callback(&theCallback);
   return 1;

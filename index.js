@@ -28,7 +28,7 @@ module.exports = class WasmContainer extends AbstractContainer {
       }
       this.kernel.state.code = code
     }
-    return this._run(message, 'init')
+    return this._run(message, 'onCreation')
   }
 
   /**
@@ -37,7 +37,7 @@ module.exports = class WasmContainer extends AbstractContainer {
    * @returns {Promise} a promise that resolves once the compuation is finished
    */
   onMessage (message) {
-    return this._run(message, 'main')
+    return this._run(message, 'onMessage')
   }
 
   async _run (message, method) {
@@ -93,7 +93,7 @@ module.exports = class WasmContainer extends AbstractContainer {
    * @param {*} val - a value to return to the callback function
    */
   execute (cb, val) {
-    this.instance.exports.table.get(cb)(val)
+    this.instance.exports.callbacks.get(cb)(val)
   }
 
   /**

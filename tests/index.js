@@ -32,7 +32,7 @@ node.on('ready', () => {
   tape('wasm container - main', async t => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
-    const main = fs.readFileSync(`${__dirname}/wasm/main.wasm`)
+    const main = fs.readFileSync(`${__dirname}/wasm/run.wasm`)
     hypervisor.registerContainer('wasm', WasmContainer, {
       test: testInterface(t)
     })
