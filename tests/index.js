@@ -5,7 +5,6 @@ const Message = require('primea-message')
 const WasmContainer = require('../index.js')
 const testInterface = require('./testInterface.js')
 const IPFS = require('ipfs')
-const ReferanceMap = require('../referanceMap.js')
 
 const node = new IPFS({
   start: false
@@ -30,37 +29,6 @@ class ContainerTestInterface {
 }
 
 node.on('ready', () => {
-  tape('referance mapping', t => {
-    t.plan(6)
-    const referanceMap = new ReferanceMap()
-    const obj1 = {}
-    const obj2 = {}
-    const ref1 = referanceMap.add(obj1)
-    const ref2 = referanceMap.add(obj2)
-    t.equals(ref1, 0, 'should produce correct refs')
-    t.equals(ref2, 1, 'should produce correct refs')
-
-    const foundObj1 = referanceMap.get(ref1)
-    const foundObj2 = referanceMap.get(ref2)
-
-    t.equals(foundObj1, obj1, 'should get the correct object')
-    t.equals(foundObj2, obj2, 'should get the correct object')
-
-    referanceMap.delete(ref1)
-    try {
-      referanceMap.get(ref1)
-    } catch (e) {
-      t.true(true, 'should delete refances')
-    }
-
-    referanceMap.clear()
-    try {
-      referanceMap.get(ref2)
-    } catch (e) {
-      t.true(true, 'should clear refances')
-    }
-  })
-
   tape('wasm container - main', async t => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
@@ -71,7 +39,7 @@ node.on('ready', () => {
     const instance = await hypervisor.createInstance('wasm', new Message({
       data: main
     }))
-    instance.run(instance.createMessage())
+    instance.message(instance.createMessage())
   })
 
   tape('wasm container - mem', async t => {

@@ -1,6 +1,7 @@
-const ReferanceMap = require('./referanceMap.js')
+const ReferanceMap = require('reference-map')
+const AbstractContainer = require('primea-abstract-container')
 
-module.exports = class WasmContainer {
+module.exports = class WasmContainer extends AbstractContainer {
   /**
    * The wasm container runs wasm code and provides a basic API for wasm
    * interfaces for interacting with the kernel
@@ -8,12 +9,13 @@ module.exports = class WasmContainer {
    * @param {object} interfaces - a map of interfaces to expose to the wasm binary
    */
   constructor (kernel, interfaces) {
+    super()
     this.kernel = kernel
     this.imports = interfaces
     this.referanceMap = new ReferanceMap()
   }
 
-  async initialize (message) {
+  async onCreation (message) {
     let code = message.data
     if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
@@ -34,7 +36,7 @@ module.exports = class WasmContainer {
    * @param {object} message
    * @returns {Promise} a promise that resolves once the compuation is finished
    */
-  run (message) {
+  onMessage (message) {
     return this._run(message, 'main')
   }
 
