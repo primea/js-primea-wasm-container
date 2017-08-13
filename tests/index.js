@@ -33,10 +33,10 @@ node.on('ready', () => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
     const main = fs.readFileSync(`${__dirname}/wasm/run.wasm`)
-    hypervisor.registerContainer('wasm', WasmContainer, {
+    hypervisor.registerContainer(WasmContainer, {
       test: testInterface(t)
     })
-    const instance = await hypervisor.createInstance('wasm', new Message({
+    const instance = await hypervisor.createInstance(WasmContainer.typeId, new Message({
       data: main
     }))
     instance.message(instance.createMessage())
@@ -44,26 +44,30 @@ node.on('ready', () => {
 
   tape('wasm container - mem', async t => {
     t.plan(1)
-    const hypervisor = new Hypervisor(node.dag)
-    const readMem = fs.readFileSync(`${__dirname}/wasm/readMem.wasm`)
-    hypervisor.registerContainer('wasm', WasmContainer, {
-      env: ContainerTestInterface,
-      test: testInterface(t)
-    })
-    await hypervisor.createInstance('wasm', new Message({
-      data: readMem
-    }))
+    try {
+      const hypervisor = new Hypervisor(node.dag)
+      const readMem = fs.readFileSync(`${__dirname}/wasm/readMem.wasm`)
+      hypervisor.registerContainer(WasmContainer, {
+        env: ContainerTestInterface,
+        test: testInterface(t)
+      })
+      await hypervisor.createInstance(WasmContainer.typeId, new Message({
+        data: readMem
+      }))
+    } catch (e) {
+      console.log(e)
+    }
   })
 
   tape('wasm container - callbacks', async t => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
     const callBackWasm = fs.readFileSync(`${__dirname}/wasm/callback.wasm`)
-    hypervisor.registerContainer('wasm', WasmContainer, {
+    hypervisor.registerContainer(WasmContainer, {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
-    hypervisor.createInstance('wasm', new Message({
+    hypervisor.createInstance(WasmContainer.typeId, new Message({
       data: callBackWasm
     }))
   })
@@ -71,7 +75,7 @@ node.on('ready', () => {
   tape('wasm container - invalid', async t => {
     t.plan(1)
     const hypervisor = new Hypervisor(node.dag)
-    hypervisor.registerContainer('wasm', WasmContainer, {
+    hypervisor.registerContainer(WasmContainer, {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
@@ -82,7 +86,7 @@ node.on('ready', () => {
 
     const rp = message.responsePort = {destPort: {messages: []}}
 
-    await hypervisor.createInstance('wasm', message)
+    await hypervisor.createInstance(WasmContainer.typeId, message)
     t.equals(rp.destPort.messages[0].data.exception, true)
   })
 
@@ -115,7 +119,7 @@ node.on('ready', () => {
     }
 
     const hypervisor = new Hypervisor(node.dag)
-    hypervisor.registerContainer('wasm', WasmContainer, {
+    hypervisor.registerContainer(WasmContainer, {
       env: ContainerTestInterface,
       test: testInterface(t)
     })
@@ -124,6 +128,6 @@ node.on('ready', () => {
       data: callBackWasm
     })
 
-    hypervisor.createInstance('wasm', message)
+    hypervisor.createInstance(WasmContainer.typeId, message)
   })
 })
