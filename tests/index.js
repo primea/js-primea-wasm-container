@@ -19,6 +19,10 @@ class ContainerTestInterface {
     return this.wasmContainer.getMemory(offset, 1)
   }
 
+  writeMem (offset, val) {
+    return this.wasmContainer.setMemory(offset, [val])
+  }
+
   async callback (cb) {
     const promise = new Promise((resolve, reject) => {
       resolve()
@@ -54,6 +58,27 @@ node.on('ready', () => {
       await hypervisor.createInstance(WasmContainer.typeId, new Message({
         data: readMem
       }))
+    } catch (e) {
+      console.log(e)
+    }
+  })
+
+  tape('write mem', async t => {
+    // t.plan(1)
+    try {
+      const hypervisor = new Hypervisor(node.dag)
+      const readMem = fs.readFileSync(`${__dirname}/wasm/writeMem.wasm`)
+      hypervisor.registerContainer(WasmContainer, {
+        env: ContainerTestInterface,
+        test: testInterface(t)
+      })
+      const root = await hypervisor.createInstance(WasmContainer.typeId, new Message({
+        data: readMem
+      }))
+      const mem = root.container.getMemory(0, 1)
+      t.equals(mem[0], 9)
+      t.end()
+      
     } catch (e) {
       console.log(e)
     }

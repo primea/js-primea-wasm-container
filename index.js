@@ -107,6 +107,11 @@ module.exports = class WasmContainer extends AbstractContainer {
     return new Uint8Array(this.instance.exports.memory.buffer, offset, length)
   }
 
+  setMemory (offset, val) {
+    const mem = this.getMemory(offset, val.length)
+    mem.set(val)
+  }
+
   static get typeId () {
     return ContainerTable.WebAssembly
   }
