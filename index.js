@@ -1,5 +1,6 @@
 const ReferanceMap = require('reference-map')
 const AbstractContainer = require('primea-abstract-container')
+const ContainerTable = require('primea-container-table')
 
 module.exports = class WasmContainer extends AbstractContainer {
   /**
@@ -104,5 +105,9 @@ module.exports = class WasmContainer extends AbstractContainer {
    */
   getMemory (offset, length) {
     return new Uint8Array(this.instance.exports.memory.buffer, offset, length)
+  }
+
+  static get typeId () {
+    return ContainerTable.WebAssembly
   }
 }
