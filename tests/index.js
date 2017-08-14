@@ -64,7 +64,6 @@ node.on('ready', () => {
   })
 
   tape('write mem', async t => {
-    // t.plan(1)
     try {
       const hypervisor = new Hypervisor(node.dag)
       const readMem = fs.readFileSync(`${__dirname}/wasm/writeMem.wasm`)
@@ -78,7 +77,6 @@ node.on('ready', () => {
       const mem = root.container.getMemory(0, 1)
       t.equals(mem[0], 9)
       t.end()
-      
     } catch (e) {
       console.log(e)
     }
