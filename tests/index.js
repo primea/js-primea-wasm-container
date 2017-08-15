@@ -23,6 +23,10 @@ class ContainerTestInterface {
     return this.wasmContainer.setMemory(offset, [val])
   }
 
+  numOfReferances () {
+    return this.wasmContainer.referanceMap.size
+  }
+
   async callback (cb) {
     const promise = new Promise((resolve, reject) => {
       resolve()
@@ -44,6 +48,21 @@ node.on('ready', () => {
       data: main
     }))
     instance.message(instance.createMessage())
+  })
+
+  tape('referances', async t => {
+    t.plan(1)
+    const hypervisor = new Hypervisor(node.dag)
+    const main = fs.readFileSync(`${__dirname}/wasm/referances.wasm`)
+    hypervisor.registerContainer(WasmContainer, {
+      env: ContainerTestInterface,
+      test: testInterface(t)
+    })
+    const ports = hypervisor.createChannel()
+    await hypervisor.createInstance(WasmContainer.typeId, new Message({
+      data: main,
+      ports: ports
+    }))
   })
 
   tape('wasm container - mem', async t => {

@@ -60,8 +60,13 @@ module.exports = class WasmContainer extends AbstractContainer {
 
     const result = await WebAssembly.instantiate(this.kernel.state.code, importMap)
     this.instance = result.instance
+
+    // add the message and ports to the refereance map
+    const messageRef = this.referanceMap.add(message)
+    message.ports.forEach(port => this.referanceMap.add())
+
     // runs the wasm code
-    this.instance.exports[method]()
+    this.instance.exports[method](messageRef)
     return this.onDone()
   }
 
