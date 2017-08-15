@@ -63,7 +63,6 @@ module.exports = class WasmContainer extends AbstractContainer {
 
     // add the message and ports to the refereance map
     const messageRef = this.referanceMap.add(message)
-    message.ports.forEach(port => this.referanceMap.add())
 
     // runs the wasm code
     this.instance.exports[method](messageRef)
