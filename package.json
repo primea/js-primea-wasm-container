@@ -25,7 +25,7 @@
     "coveralls": "^2.13.1",
     "ipfs": "^0.25.0",
     "istanbul": "^1.1.0-alpha.1",
-    "primea-hypervisor": "0.0.5",
+    "primea-hypervisor": "0.1.0",
     "standard": "^10.0.0",
     "tape": "^4.6.3",
     "wast2wasm": "0.0.1"
