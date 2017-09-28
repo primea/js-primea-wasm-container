@@ -22,7 +22,7 @@
     "prima"
   ],
   "devDependencies": {
-    "coveralls": "^2.13.1",
+    "coveralls": "^3.0.0",
     "ipfs": "^0.26.0",
     "istanbul": "^1.1.0-alpha.1",
     "primea-hypervisor": "0.1.0",
