@@ -23,15 +23,15 @@
   ],
   "devDependencies": {
     "coveralls": "^3.0.0",
-    "ipfs": "^0.26.0",
-    "istanbul": "^1.1.0-alpha.1",
     "primea-hypervisor": "0.1.0",
+    "primea-message": "0.0.2",
     "standard": "^10.0.0",
     "tape": "^4.6.3",
     "wast2wasm": "0.0.1"
   },
   "dependencies": {
     "primea-abstract-container": "0.0.5",
+    "dfinity-radix-tree": "0.0.2",
     "primea-container-table": "0.0.0",
     "reference-map": "1.0.0"
   }

@@ -17,7 +17,7 @@ module.exports = class WasmContainer extends AbstractContainer {
   }
 
   async onCreation (message) {
-    let code = message.data
+    let code = message.data.code
     if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
     } else {
