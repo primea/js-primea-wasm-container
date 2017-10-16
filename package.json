@@ -26,7 +26,7 @@
     "coveralls": "^3.0.0",
     "level": "^1.7.0",
     "nyc": "^11.2.1",
-    "primea-hypervisor": "0.1.0",
+    "primea-hypervisor": "0.2.0",
     "primea-message": "0.0.2",
     "standard": "^10.0.0",
     "tape": "^4.6.3",
