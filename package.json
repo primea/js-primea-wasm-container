@@ -1,6 +1,6 @@
 {
   "name": "primea-wasm-container",
-  "version": "0.0.3",
+  "version": "0.3.1",
   "description": "",
   "main": "index.js",
   "scripts": {
