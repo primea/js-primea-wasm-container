@@ -11,7 +11,7 @@ This implements a wasm container for the ewasm-kernel
 `npm install primea-wasm-container`
 
 # USAGE
-```
+```javascript
 const WasmContainer = require('primea-wasm-container')
 
 // this class with get instantiated when a new wasm container instance is created
@@ -26,7 +26,6 @@ class HelloWorld {
 hypervisor.registerContainer(WasmContainer, {
   env: HelloWorld 
 })
-
 ```
 
 # LICENSE
