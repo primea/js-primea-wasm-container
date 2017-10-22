@@ -17,7 +17,7 @@ module.exports = class WasmContainer extends AbstractContainer {
   }
 
   async onCreation (message) {
-    let code = message.data.code
+    let code = this.kernel.code
     if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
     } else {
@@ -58,7 +58,7 @@ module.exports = class WasmContainer extends AbstractContainer {
       }
     }
 
-    const result = await WebAssembly.instantiate(this.kernel.state.code, importMap)
+    const result = await WebAssembly.instantiate(this.kernel.code, importMap)
     this.instance = result.instance
 
     // add the message and ports to the refereance map

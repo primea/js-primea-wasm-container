@@ -49,10 +49,7 @@ tape('wasm container - main', async t => {
   const port = hypervisor.creationService.getPort()
 
   let instance = await hypervisor.send(port, new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: main
-    }
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), main])
   }))
   instance.message(instance.createMessage())
 })
@@ -69,10 +66,7 @@ tape('referances', async t => {
   const port = hypervisor.creationService.getPort()
 
   hypervisor.send(port, new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: main
-    },
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), main]),
     ports: ports
   }))
 })
@@ -89,10 +83,7 @@ tape('wasm container - mem', async t => {
   const port = hypervisor.creationService.getPort()
 
   hypervisor.send(port, new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: readMem
-    }
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), readMem])
   }))
 })
 
@@ -106,10 +97,7 @@ tape('write mem', async t => {
 
   const port = hypervisor.creationService.getPort()
   const root = await hypervisor.send(port, new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: readMem
-    }
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), readMem])
   }))
   const mem = root.container.getMemory(0, 1)
   t.equals(mem[0], 9)
@@ -127,10 +115,7 @@ tape('wasm container - callbacks', async t => {
 
   const port = hypervisor.creationService.getPort()
   await hypervisor.send(port, new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: callBackWasm
-    }
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), callBackWasm])
   }))
 })
 
@@ -143,10 +128,7 @@ tape('wasm container - invalid', async t => {
   })
 
   const message = new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: Buffer.from([0x00])
-    }
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), Buffer.from([0])])
   })
 
   const rp = message.responsePort = {destPort: {messages: []}}
@@ -167,10 +149,6 @@ tape('initailize', async t => {
       this.wasmContainer = wasmContainer
     }
 
-    readMem (offset) {
-      return this.wasmContainer.getMemory(offset, 1)
-    }
-
     async callback (cb) {
       const promise = new Promise((resolve, reject) => {
         resolve()
@@ -180,7 +158,7 @@ tape('initailize', async t => {
     }
 
     static initialize (code) {
-      t.equals(code, callBackWasm)
+      t.deepEquals(code, callBackWasm)
       return code
     }
   }
@@ -193,9 +171,6 @@ tape('initailize', async t => {
 
   const port = hypervisor.creationService.getPort()
   hypervisor.send(port, new Message({
-    data: {
-      type: WasmContainer.typeId,
-      code: callBackWasm
-    }
+    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), callBackWasm])
   }))
 })
