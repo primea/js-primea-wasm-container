@@ -27,7 +27,7 @@
     "level": "^2.0.0",
     "nyc": "^11.2.1",
     "primea-hypervisor": "0.3.0",
-    "primea-message": "0.0.2",
+    "primea-message": "0.0.3",
     "standard": "^10.0.0",
     "tape": "^4.6.3",
     "wast2wasm": "0.0.1"
