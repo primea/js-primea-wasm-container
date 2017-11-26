@@ -27,13 +27,13 @@
     "level": "^2.0.0",
     "nyc": "^11.2.1",
     "primea-hypervisor": "0.4.0",
-    "primea-message": "0.0.3",
+    "primea-message": "0.0.4",
     "standard": "^10.0.0",
     "tape": "^4.6.3",
     "wast2wasm": "0.0.1"
   },
   "dependencies": {
-    "primea-abstract-container": "0.0.5",
+    "primea-abstract-container": "0.0.6",
     "primea-container-table": "0.0.0",
     "reference-map": "1.0.0"
   }
