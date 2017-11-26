@@ -5,19 +5,18 @@ const ContainerTable = require('primea-container-table')
 module.exports = class WasmContainer extends AbstractContainer {
   /**
    * The wasm container runs wasm code and provides a basic API for wasm
-   * interfaces for interacting with the kernel
-   * @param {object} kernel - the kernel instance
+   * interfaces for interacting with the actor
+   * @param {object} actor - the actor instance
    * @param {object} interfaces - a map of interfaces to expose to the wasm binary
    */
-  constructor (kernel, interfaces) {
-    super()
-    this.kernel = kernel
+  constructor (actor, interfaces) {
+    super(actor)
     this.imports = interfaces
     this.referanceMap = new ReferanceMap()
   }
 
   async onCreation (message) {
-    let code = this.kernel.code
+    let code = this.actor.code
     if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
     } else {
@@ -27,7 +26,7 @@ module.exports = class WasmContainer extends AbstractContainer {
           code = await interf.initialize(code)
         }
       }
-      this.kernel.state.code = code
+      this.actor.state.code = code
     }
     return this._run(message, 'onCreation')
   }
@@ -58,7 +57,7 @@ module.exports = class WasmContainer extends AbstractContainer {
       }
     }
 
-    const result = await WebAssembly.instantiate(this.kernel.code, importMap)
+    const result = await WebAssembly.instantiate(this.actor.code, importMap)
     this.instance = result.instance
 
     // add the message and ports to the refereance map

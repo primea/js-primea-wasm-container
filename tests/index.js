@@ -129,7 +129,6 @@ tape('wasm container - invalid', async t => {
   })
 
   message.on('execution:error', (e) => {
-    console.log(e)
     t.pass('should cature error')
   })
 
