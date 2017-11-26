@@ -46,12 +46,10 @@ tape('wasm container - main', async t => {
     test: testInterface(t)
   })
 
-  const port = hypervisor.creationService.getPort()
-
-  let instance = await hypervisor.send(port, new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), main])
+  let cap = await hypervisor.createActor(WasmContainer.typeId, new Message({
+    data: main
   }))
-  instance.message(instance.createMessage())
+  hypervisor.send(cap, new Message())
 })
 
 tape('referances', async t => {
@@ -62,12 +60,9 @@ tape('referances', async t => {
     env: ContainerTestInterface,
     test: testInterface(t)
   })
-  const ports = hypervisor.createChannel()
-  const port = hypervisor.creationService.getPort()
 
-  hypervisor.send(port, new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), main]),
-    ports: ports
+  hypervisor.createActor(WasmContainer.typeId, new Message({
+    data: main
   }))
 })
 
@@ -80,26 +75,29 @@ tape('wasm container - mem', async t => {
     test: testInterface(t)
   })
 
-  const port = hypervisor.creationService.getPort()
-
-  hypervisor.send(port, new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), readMem])
+  hypervisor.createActor(WasmContainer.typeId, new Message({
+    data: readMem
   }))
 })
 
 tape('write mem', async t => {
   const hypervisor = new Hypervisor(tree)
   const readMem = fs.readFileSync(`${__dirname}/wasm/writeMem.wasm`)
-  hypervisor.registerContainer(WasmContainer, {
+
+  class WasmContainerNoIdle extends WasmContainer {
+    onIdle () {}
+  }
+
+  hypervisor.registerContainer(WasmContainerNoIdle, {
     env: ContainerTestInterface,
     test: testInterface(t)
   })
 
-  const port = hypervisor.creationService.getPort()
-  const root = await hypervisor.send(port, new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), readMem])
+  const cap = await hypervisor.createActor(WasmContainerNoIdle.typeId, new Message({
+    data: readMem
   }))
-  const mem = root.container.getMemory(0, 1)
+  const actor = await hypervisor.getActor(cap.destId)
+  const mem = actor.container.getMemory(0, 1)
   t.equals(mem[0], 9)
   t.end()
 })
@@ -113,9 +111,8 @@ tape('wasm container - callbacks', async t => {
     test: testInterface(t)
   })
 
-  const port = hypervisor.creationService.getPort()
-  await hypervisor.send(port, new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), callBackWasm])
+  await hypervisor.createActor(WasmContainer.typeId, new Message({
+    data: callBackWasm
   }))
 })
 
@@ -128,15 +125,15 @@ tape('wasm container - invalid', async t => {
   })
 
   const message = new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), Buffer.from([0])])
+    data: Buffer.from([0])
   })
 
-  const rp = message.responsePort = {destPort: {messages: []}}
+  message.on('execution:error', (e) => {
+    console.log(e)
+    t.pass('should cature error')
+  })
 
-  const port = hypervisor.creationService.getPort()
-  await hypervisor.send(port, message)
-
-  t.equals(rp.destPort.messages[0].data.exception, true)
+  await hypervisor.createActor(WasmContainer.typeId, message)
 })
 
 tape('initailize', async t => {
@@ -169,8 +166,7 @@ tape('initailize', async t => {
     test: testInterface(t)
   })
 
-  const port = hypervisor.creationService.getPort()
-  hypervisor.send(port, new Message({
-    data: Buffer.concat([Buffer.from([0]), Buffer.from([WasmContainer.typeId]), callBackWasm])
+  await hypervisor.createActor(WasmContainer.typeId, new Message({
+    data: callBackWasm
   }))
 })
