@@ -4,7 +4,7 @@ const Hypervisor = require('primea-hypervisor')
 const Message = require('primea-message')
 const WasmContainer = require('../index.js')
 const testInterface = require('./testInterface.js')
-const level = require('level')
+const level = require('level-browserify')
 const RadixTree = require('dfinity-radix-tree')
 const db = level('./testdb')
 
