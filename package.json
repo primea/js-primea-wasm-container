@@ -19,7 +19,7 @@
   "keywords": [
     "wasm",
     "webassembly",
-    "primae"
+    "primea"
   ],
   "devDependencies": {
     "dfinity-radix-tree": "0.0.4",
