@@ -1,6 +1,9 @@
 const ReferanceMap = require('reference-map')
 const AbstractContainer = require('primea-abstract-container')
 const ContainerTable = require('primea-container-table')
+const RadixTree = require('dfinity-radix-tree')
+
+const CODEKEY = new RadixTree.ArrayConstructor([1])
 
 module.exports = class WasmContainer extends AbstractContainer {
   /**
@@ -13,10 +16,26 @@ module.exports = class WasmContainer extends AbstractContainer {
     super(actor)
     this.imports = interfaces
     this.referanceMap = new ReferanceMap()
+
+    // Builds a import map with an array of given interfaces
+    this.importMap = {}
+    for (const name in this.imports) {
+      this.importMap[name] = {}
+      const Import = this.imports[name]
+      const newInterface = new Import(this)
+      const props = Object.getOwnPropertyNames(Import.prototype)
+
+      // bind the methods to the correct 'this'
+      for (const prop of props) {
+        if (prop !== 'constructor') {
+          this.importMap[name][prop] = newInterface[prop].bind(newInterface)
+        }
+      }
+    }
   }
 
   async onCreation (message) {
-    let code = this.actor.code
+    let code = message.data
     if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
     } else {
@@ -26,7 +45,7 @@ module.exports = class WasmContainer extends AbstractContainer {
           code = await interf.initialize(code)
         }
       }
-      this.actor.state.code = code
+      this.actor.state.set(CODEKEY, code)
     }
     return this._run(message, 'onCreation')
   }
@@ -41,23 +60,8 @@ module.exports = class WasmContainer extends AbstractContainer {
   }
 
   async _run (message, method) {
-    // Builds a import map with an array of given interfaces
-    const importMap = {}
-    for (const name in this.imports) {
-      importMap[name] = {}
-      const Import = this.imports[name]
-      const newInterface = new Import(this)
-      const props = Object.getOwnPropertyNames(Import.prototype)
-
-      // bind the methods to the correct 'this'
-      for (const prop of props) {
-        if (prop !== 'constructor') {
-          importMap[name][prop] = newInterface[prop].bind(newInterface)
-        }
-      }
-    }
-
-    const result = await WebAssembly.instantiate(this.actor.code, importMap)
+    const code = await this.actor.state.get(CODEKEY)
+    const result = await WebAssembly.instantiate(code, this.importMap)
     this.instance = result.instance
 
     // add the message and ports to the refereance map
