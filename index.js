@@ -55,21 +55,23 @@ module.exports = class WasmContainer extends AbstractContainer {
    * @param {object} message
    * @returns {Promise} a promise that resolves once the compuation is finished
    */
-  onMessage (message) {
-    return this._run(message, 'onMessage')
+  onMessage (message, method = 'onMessage') {
+    return this._run(message, method)
   }
 
   async _run (message, method) {
     const code = await this.actor.state.get(CODEKEY)
     const result = await WebAssembly.instantiate(code, this.importMap)
     this.instance = result.instance
+    if (this.instance.exports[method]) {
+      // add the message and ports to the refereance map
+      const messageRef = this.referanceMap.add(message)
 
-    // add the message and ports to the refereance map
-    const messageRef = this.referanceMap.add(message)
-
-    // runs the wasm code
-    this.instance.exports[method](messageRef)
-    return this.onDone()
+      // runs the wasm code
+      this.instance.exports[method](messageRef)
+      await this.onDone()
+      this.referanceMap.clear()
+    }
   }
 
   /**
@@ -82,7 +84,6 @@ module.exports = class WasmContainer extends AbstractContainer {
       prevOps = this._opsQueue
       await prevOps
     }
-    this.referanceMap.clear()
   }
 
   /**

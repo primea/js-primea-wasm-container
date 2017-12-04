@@ -169,3 +169,20 @@ tape('initailize', async t => {
     data: callBackWasm
   }))
 })
+
+tape('shouldnt run non exstant methods', async t => {
+  const hypervisor = new Hypervisor(tree)
+  const main = fs.readFileSync(`${__dirname}/wasm/referances.wasm`)
+  hypervisor.registerContainer(WasmContainer, {
+    env: ContainerTestInterface,
+    test: testInterface(t)
+  })
+
+  const cap = await hypervisor.createActor(WasmContainer.typeId, new Message({
+    data: main
+  }))
+
+  const actor = await hypervisor.getActor(cap.destId)
+  await actor.container.onMessage(new Message(), 'test')
+  t.end()
+})
