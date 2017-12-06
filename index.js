@@ -14,16 +14,20 @@ module.exports = class WasmContainer extends AbstractContainer {
    */
   constructor (actor, interfaces) {
     super(actor)
-    this.imports = interfaces
     this.referanceMap = new ReferanceMap()
 
+    // hold the interfaces `initailize` functions, if any
+    this.initializeFuncs = []
     // Builds a import map with an array of given interfaces
     this.importMap = {}
-    for (const name in this.imports) {
+    for (const name in interfaces) {
       this.importMap[name] = {}
-      const Import = this.imports[name]
-      const newInterface = new Import(this)
-      const props = Object.getOwnPropertyNames(Import.prototype)
+      const Interface = interfaces[name]
+      if (Interface.initialize) {
+        this.initializeFuncs.push(Interface.initialize)
+      }
+      const newInterface = new Interface(this)
+      const props = Object.getOwnPropertyNames(Interface.prototype)
 
       // bind the methods to the correct 'this'
       for (const prop of props) {
@@ -39,12 +43,7 @@ module.exports = class WasmContainer extends AbstractContainer {
     if (!WebAssembly.validate(code)) {
       throw new Error('invalid wasm binary')
     } else {
-      for (const name in this.imports) {
-        const interf = this.imports[name]
-        if (interf.initialize) {
-          code = await interf.initialize(code)
-        }
-      }
+      await Promise.all(this.initializeFuncs.map(initFunc => initFunc(code)))
       this.actor.state.set(CODEKEY, code)
     }
     return this._run(message, 'onCreation')
