@@ -26,7 +26,7 @@
     "dfinity-radix-tree": "0.0.9",
     "level-browserify": "^1.1.1",
     "nyc": "^11.3.0",
-    "primea-hypervisor": "^0.4.3",
+    "primea-hypervisor": "^0.4.5",
     "primea-message": "^0.6.0",
     "standard": "^10.0.0",
     "tape": "^4.6.3",

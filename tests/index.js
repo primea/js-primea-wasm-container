@@ -83,9 +83,15 @@ tape('wasm container - mem', async t => {
 tape('write mem', async t => {
   const hypervisor = new Hypervisor(tree)
   const readMem = fs.readFileSync(`${__dirname}/wasm/writeMem.wasm`)
+  let cap
 
   class WasmContainerNoIdle extends WasmContainer {
-    onIdle () {}
+    async onIdle () {
+      const actor = await hypervisor.getActor(cap.destId)
+      const mem = actor.container.getMemory(0, 1)
+      t.equals(mem[0], 9)
+      t.end()
+    }
   }
 
   hypervisor.registerContainer(WasmContainerNoIdle, {
@@ -93,13 +99,9 @@ tape('write mem', async t => {
     test: testInterface(t)
   })
 
-  const cap = await hypervisor.createActor(WasmContainerNoIdle.typeId, new Message({
+  cap = await hypervisor.createActor(WasmContainerNoIdle.typeId, new Message({
     data: readMem
   }))
-  const actor = await hypervisor.getActor(cap.destId)
-  const mem = actor.container.getMemory(0, 1)
-  t.equals(mem[0], 9)
-  t.end()
 })
 
 tape('wasm container - callbacks', async t => {
