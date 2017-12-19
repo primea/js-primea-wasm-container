@@ -35,6 +35,6 @@
   "dependencies": {
     "primea-abstract-container": "0.0.6",
     "primea-container-table": "0.0.0",
-    "reference-map": "1.0.0"
+    "reference-map": "1.1.0"
   }
 }
