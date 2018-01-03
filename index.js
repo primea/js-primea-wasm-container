@@ -3,7 +3,7 @@ const AbstractContainer = require('primea-abstract-container')
 const ContainerTable = require('primea-container-table')
 const RadixTree = require('dfinity-radix-tree')
 
-const CODEKEY = new RadixTree.ArrayConstructor([1])
+const CODEKEY = new RadixTree.ArrayConstructor([0, 1])
 
 module.exports = class WasmContainer extends AbstractContainer {
   /**
@@ -100,8 +100,10 @@ module.exports = class WasmContainer extends AbstractContainer {
    * @param {integer} cb
    * @param {*} val - a value to return to the callback function
    */
-  execute (cb, val) {
-    this.instance.exports.callbacks.get(cb)(val)
+  execute (cb) {
+    const args = [...arguments]
+    args.shift()
+    this.instance.exports.callbacks.get(cb)(...args)
   }
 
   /**
