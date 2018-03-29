@@ -1,7 +1,7 @@
 (module
-  (import "table" "externalize" (func $externalize (param i32 i32) (result i32)))
+  (import "elem" "externalize" (func $externalize (param i32 i32) (result i32)))
   (import "memory" "externalize" (func $mem_externalize (param i32 i32) (result i32)))
-  (import "table" "internalize" (func $internalize (param i32 i32 i32 i32)))
+  (import "elem" "internalize" (func $internalize (param i32 i32 i32 i32)))
   (memory (export "memory") 1)
   (data (i32.const 0) "test")
   (func $test

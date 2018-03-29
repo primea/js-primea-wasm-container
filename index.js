@@ -19,8 +19,14 @@ function fromMetaJSON (json, id) {
 }
 
 function generateWrapper (funcRef, container) {
+  // check if the wrapper has been generated
+  if (funcRef.wrapper) {
+    return funcRef.wrapper
+  }
   let wrapper = typeCheckWrapper(funcRef.params)
   const wasm = json2wasm(wrapper)
+  const fs = require('fs')
+  fs.writeFileSync('./checker.wasm', wasm)
   const mod = WebAssembly.Module(wasm)
   const self = funcRef
   wrapper = WebAssembly.Instance(mod, {
@@ -33,8 +39,13 @@ function generateWrapper (funcRef, container) {
           let arg = args.shift()
           if (!nativeTypes.has(type)) {
             arg = container.refs.get(arg, type)
+            checkedArgs.push(arg)
+          } else if (type === 'i64') {
+            checkedArgs.push(arg)
+            checkedArgs.push(args.shift())
+          } else {
+            checkedArgs.push(arg)
           }
-          checkedArgs.push(arg)
         }
         const message = new Message({
           funcRef: self,
@@ -44,6 +55,8 @@ function generateWrapper (funcRef, container) {
       }
     }
   })
+  // cache the wrapper
+  funcRef.wrapper = wrapper
   wrapper.exports.check.object = funcRef
   return wrapper
 }
@@ -89,7 +102,7 @@ module.exports = class WasmContainer {
     return {
       func: {
         externalize: index => {
-          const func = this.instance.exports.table.get(index)
+          const func = self.instance.exports.table.get(index)
           const object = func.object
           if (object) {
             // externalize a pervously internalized function
@@ -107,13 +120,8 @@ module.exports = class WasmContainer {
         internalize: (index, ref) => {
           const funcRef = self.refs.get(ref, 'func')
           const wrapper = generateWrapper(funcRef, self)
-          this.instance.exports.table.set(index, wrapper.exports.check)
+          self.instance.exports.table.set(index, wrapper.exports.check)
         },
-        // catch: (ref, catchRef) => {
-        //   const {funcRef} = self.refs.get(ref, FunctionRef)
-        //   const {funcRef: catchFunc} = self.refs.get(ref, FunctionRef)
-        //   funcRef.catch = catchFunc
-        // },
         get_gas_budget: (funcRef) => {
           const func = self.refs.get(funcRef, 'func')
           return func.gas
@@ -125,77 +133,77 @@ module.exports = class WasmContainer {
       },
       link: {
         wrap: ref => {
-          const obj = this.refs.get(ref)
+          const obj = self.refs.get(ref)
           const link = {'/': obj}
-          return this.refs.add(link, 'link')
+          return self.refs.add(link, 'link')
         },
         unwrap: async (ref, cb) => {
-          const obj = this.refs.get(ref, 'link')
-          const promise = this.actor.tree.dataStore.get(obj)
-          await this._opsQueue.push(promise)
+          const obj = self.refs.get(ref, 'link')
+          const promise = self.actor.tree.dataStore.get(obj)
+          await self._opsQueue.push(promise)
         }
       },
       module: {
         new: dataRef => {
-          const mod = this.actor.createActor(dataRef)
-          return this.refs.add(mod, 'mod')
+          const mod = self.actor.createActor(dataRef)
+          return self.refs.add(mod, 'mod')
         },
         export: (modRef, dataRef) => {
-          const mod = this.refs.get(modRef, 'mod')
-          let name = this.refs.get(dataRef, 'data')
+          const mod = self.refs.get(modRef, 'mod')
+          let name = self.refs.get(dataRef, 'data')
           name = Buffer.from(name).toString()
           const funcRef = mod.getFuncRef(name)
-          return this.refs.add(funcRef, 'func')
+          return self.refs.add(funcRef, 'func')
         },
         self: () => {
-          return this.refs.add(this.modSelf, 'mod')
+          return self.refs.add(this.modSelf, 'mod')
         }
       },
       memory: {
         externalize: (index, length) => {
           const data = Buffer.from(this.get8Memory(index, length))
-          return this.refs.add(data, 'data')
+          return self.refs.add(data, 'data')
         },
         internalize: (dataRef, srcOffset, sinkOffset, length) => {
-          let data = this.refs.get(dataRef, 'data')
+          let data = self.refs.get(dataRef, 'data')
           data = data.subarray(srcOffset, length)
-          const mem = this.get8Memory(sinkOffset, data.length)
+          const mem = self.get8Memory(sinkOffset, data.length)
           mem.set(data)
         },
         length (dataRef) {
-          let data = this.refs.get(dataRef, 'data')
+          let data = self.refs.get(dataRef, 'data')
           return data.length
         }
       },
-      table: {
+      elem: {
         externalize: (index, length) => {
           const mem = Buffer.from(this.get8Memory(index, length * 4))
           const objects = []
           while (length--) {
             const ref = mem.readUInt32LE(length * 4)
-            const obj = this.refs.get(ref)
+            const obj = self.refs.get(ref)
             objects.unshift(obj)
           }
           return this.refs.add(objects, 'elem')
         },
         internalize: (elemRef, srcOffset, sinkOffset, length) => {
-          let table = this.refs.get(elemRef, 'elem')
-          const buf = table.slice(srcOffset, srcOffset + length).map(obj => this.refs.add(obj))
-          const mem = this.get32Memory(sinkOffset, length)
+          let table = self.refs.get(elemRef, 'elem')
+          const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj))
+          const mem = self.get32Memory(sinkOffset, length)
           mem.set(buf)
         },
         length (elemRef) {
-          let elem = this.refs.get(elemRef, 'elem')
+          let elem = self.refs.get(elemRef, 'elem')
           return elem.length
         }
       },
       metering: {
         usegas: amount => {
-          this.actor.incrementTicks(amount)
+          self.actor.incrementTicks(amount)
           funcRef.gas -= amount
-          if (funcRef.gas < 0) {
-            throw new Error('out of gas! :(')
-          }
+          // if (funcRef.gas < 0) {
+          //   throw new Error('out of gas! :(')
+          // }
         }
       }
     }
@@ -217,13 +225,19 @@ module.exports = class WasmContainer {
       }
     }
     // import references
-    const args = message.funcArguments.map((arg, index) => {
-      const type = funcRef.params[index]
+    let index = 0
+    const args = []
+    message.funcRef.params.forEach(type => {
+      const arg = message.funcArguments[index]
       if (nativeTypes.has(type)) {
-        return arg
+        args.push(arg)
+        if (type === 'i64') {
+          args.push(message.funcArguments[++index])
+        }
       } else {
-        return this.refs.add(arg, type)
+        args.push(this.refs.add(arg, type))
       }
+      index++
     })
 
     // setup globals
@@ -238,11 +252,16 @@ module.exports = class WasmContainer {
     }
 
     // call entrypoint function
+    let wasmFunc
     if (funcRef.identifier[0]) {
-      this.instance.exports.table.get(funcRef.identifier[1])(...args)
+      wasmFunc = this.instance.exports.table.get(funcRef.identifier[1])
     } else {
-      this.instance.exports[funcRef.identifier[1]](...args)
+      wasmFunc = this.instance.exports[funcRef.identifier[1]]
     }
+
+    const wrapper = generateWrapper(funcRef)
+    wrapper.exports.table.set(0, wasmFunc)
+    wrapper.exports.invoke(...args)
     await this.onDone()
 
     // store globals

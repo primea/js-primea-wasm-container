@@ -90,15 +90,16 @@ module.exports = function (params) {
     }]
   }]
 
-  const definedTypes = new Set(['actor', 'func', 'buf'])
+  const definedTypes = new Set(['anyref', 'module', 'func', 'data', 'elem', 'link', 'id'])
   const setGlobals = []
   const importType = module[1].entries[0].params
   const checkType = module[1].entries[1].params
   const invokerType = module[1].entries[2].params
   const invokeType = module[1].entries[3].params
-  const checkCode = module[7].entries[0].code
-  const invokeCode = module[7].entries[1].code
+  let checkCode = module[7].entries[0].code
+  let invokeCode = module[7].entries[1].code
 
+  let invokeIndex = 0
   params.forEach((param, index) => {
     let baseType = param
     const typeCode = LANGUAGE_TYPES_STRG[param]
@@ -112,46 +113,152 @@ module.exports = function (params) {
     // check import
     importType.push('i32')
     importType.push('i32')
-    checkCode.push({
-      'return_type': 'i32',
-      'name': 'const',
-      'immediates': typeCode
-    })
-    checkCode.push({
-      'name': 'get_local',
-      'immediates': index
-    })
-    invokeCode.push({
-      'name': 'get_local',
-      'immediates': index
-    })
+    checkCode.push(i32_const(typeCode))
+    if (baseType === 'i64') {
+      importType.push('i32')
+
+      // splits an i64 into 2 i32
+      const spliti64 = [
+        get_local(index),
+        i64_const(32),
+        shr_u(),
+        wrap_i64(),
+        get_local(index),
+        wrap_i64()]
+
+      checkCode = checkCode.concat(spliti64)
+
+      const i32wrapCode = [
+        get_local(invokeIndex), {
+          'return_type': 'i64',
+          'name': 'extend_u/i32'
+        }, {
+          'return_type': 'i64',
+          'name': 'const',
+          'immediates': '32'
+        }, {
+          'return_type': 'i64',
+          'name': 'shl'
+        },
+        get_local(++invokeIndex), {
+          'return_type': 'i64',
+          'name': 'extend_u/i32'
+        }, {
+          'return_type': 'i64',
+          'name': 'add'
+        }
+      ]
+
+      invokeCode = invokeCode.concat(i32wrapCode)
+      invokerType.push('i32')
+    } else {
+      checkCode.push(get_local(index))
+      invokeCode.push(get_local(invokeIndex))
+    }
+    invokerType.push('i32')
     // check export
     checkType.push(baseType)
     // invoke
     invokeType.push(baseType)
-    invokerType.push(baseType)
+    invokeIndex++
   })
 
-  module[7].entries[0].code = checkCode.concat(setGlobals, [{
+  module[7].entries[0].code = checkCode.concat(setGlobals, [call(0), end()])
+  invokeCode.push(i32_const(0))
+  invokeCode.push(call_indirect(3))
+  invokeCode.push(end())
+  module[7].entries[1].code = invokeCode
+  return module
+}
+
+function call (index) {
+  return {
     'name': 'call',
-    'immediates': '0'
-  }, {
-    'name': 'end'
-  }])
-  invokeCode.push({
-    'return_type': 'i32',
-    'name': 'const',
-    'immediates': '0'
-  })
-  invokeCode.push({
+    'immediates': index
+  }
+}
+
+function call_indirect (index) {
+  return {
     'name': 'call_indirect',
     'immediates': {
-      'index': 3,
+      'index': index,
       'reserved': 0
     }
-  })
-  invokeCode.push({
-    'name': 'end'
-  })
-  return module
+  }
+}
+
+function typeEntry (params = []) {
+  return {
+    form: 'func',
+    params: params
+  }
+}
+
+function end () {
+  return {
+    name: 'end'
+  }
+}
+
+function get_local (index) {
+  return {
+    name: 'get_local',
+    immediates: index
+  }
+}
+
+function get_global (index) {
+  return {
+    name: 'get_global',
+    immediates: index
+  }
+}
+
+function set_global (index) {
+  return {
+    name: 'set_global',
+    immediates: index
+  }
+}
+
+function i32_const (num) {
+  return {
+    'return_type': 'i32',
+    'name': 'const',
+    'immediates': num
+  }
+}
+
+function i64_const (num) {
+  return {
+    'return_type': 'i64',
+    'name': 'const',
+    'immediates': num
+  }
+}
+
+function i32_store () {
+  return {
+    'return_type': 'i32',
+    'name': 'store',
+    'immediates': {
+      'flags': 2,
+      'offset': 0
+    }
+  }
+}
+
+function shr_u() {
+  return {
+    'return_type': 'i64',
+    'name': 'shr_u'
+  }
+}
+
+function wrap_i64() {
+  return {
+    'return_type': 'i32',
+    'name': 'wrap/i64'
+  }
 }

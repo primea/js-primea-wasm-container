@@ -5,6 +5,7 @@ const {Message} = require('primea-objects')
 const Hypervisor = require('primea-hypervisor')
 const WasmContainer = require('../')
 
+const annotations = require('primea-annotations')
 const level = require('level-browserify')
 const RadixTree = require('dfinity-radix-tree')
 const db = level('./testdb')
@@ -20,19 +21,62 @@ class TestWasmContainer extends WasmContainer {
   }
   getInterface (funcRef) {
     const orginal = super.getInterface(funcRef)
+    const self = this
     return Object.assign(orginal, {
       test: {
         check: (a, b) => {
           tester.equals(a, b)
         },
         print: (dataRef) => {
-          let buf = this.refs.get(dataRef, 'buf')
+          console.log(dataRef, self.refs)
+          let buf = self.refs.get(dataRef, 'data')
           console.log(buf.toString())
         }
       }
     })
   }
 }
+
+tape.skip('bwasic', async t => {
+  // t.plan(1)
+  tester = t
+
+  const typeInfo = {
+    'types': [{
+      'form': 'func',
+      'params': [
+        'i64',
+        'data'
+      ]
+    }],
+    'typeMap': [{
+      'func': 46,
+      'type': 0
+    }]
+  }
+
+  const tree = new RadixTree({db})
+
+  let wasm = fs.readFileSync('./test.wasm')
+  wasm = annotations.encodeAndInject(typeInfo, wasm)
+
+  const hypervisor = new Hypervisor(tree)
+  hypervisor.registerContainer(TestWasmContainer)
+
+  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  const funcRef = module.getFuncRef('#main')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef
+  }).on('execution:error', e => {
+    console.log(e)
+  })
+  hypervisor.send(message)
+  // const stateRoot = await hypervisor.createStateRoot()
+  // t.deepEquals(stateRoot, expectedState, 'expected root!')
+  t.end()
+})
 
 tape('basic', async t => {
   t.plan(1)
