@@ -37,7 +37,6 @@ class TestWasmContainer extends WasmContainer {
 tape('basic', async t => {
   t.plan(1)
   tester = t
-  const expectedState = Buffer.from('4494963fb0e02312510e675fbca8b60b6e03bd00', 'hex')
 
   const tree = new RadixTree({
     db
@@ -59,14 +58,14 @@ tape('basic', async t => {
     console.log(e)
   })
   hypervisor.send(message)
-  const stateRoot = await hypervisor.createStateRoot()
+  // const stateRoot = await hypervisor.createStateRoot()
   // t.deepEquals(stateRoot, expectedState, 'expected root!')
 })
 
 tape('empty', async t => {
   t.plan(1)
   tester = t
-  const expectedState = Buffer.from('aeb5418328108a82b7a2a57712bddc989d513f5d', 'hex')
+  const expectedState = Buffer.from('bb15867b26293aa36c774b8c82541dd64212ba9a', 'hex')
 
   const tree = new RadixTree({
     db

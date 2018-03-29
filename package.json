@@ -32,6 +32,7 @@
     "wabt": "^1.0.0"
   },
   "dependencies": {
+    "borc": "^2.0.2",
     "primea-annotations": "0.0.2",
     "primea-objects": "0.0.1",
     "reference-map": "1.2.3",
