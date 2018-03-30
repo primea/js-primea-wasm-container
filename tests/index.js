@@ -37,34 +37,17 @@ class TestWasmContainer extends WasmContainer {
   }
 }
 
-tape.skip('bwasic', async t => {
-  // t.plan(1)
+tape('i64', async t => {
+  t.plan(1)
   tester = t
-
-  const typeInfo = {
-    'types': [{
-      'form': 'func',
-      'params': [
-        'i64',
-        'data'
-      ]
-    }],
-    'typeMap': [{
-      'func': 46,
-      'type': 0
-    }]
-  }
-
   const tree = new RadixTree({db})
-
-  let wasm = fs.readFileSync('./test.wasm')
-  wasm = annotations.encodeAndInject(typeInfo, wasm)
+  let wasm = fs.readFileSync(WASM_PATH + '/i64.wasm')
 
   const hypervisor = new Hypervisor(tree)
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
-  const funcRef = module.getFuncRef('#main')
+  const funcRef = module.getFuncRef('main')
   funcRef.gas = 322000
 
   const message = new Message({
@@ -73,9 +56,6 @@ tape.skip('bwasic', async t => {
     console.log(e)
   })
   hypervisor.send(message)
-  // const stateRoot = await hypervisor.createStateRoot()
-  // t.deepEquals(stateRoot, expectedState, 'expected root!')
-  t.end()
 })
 
 tape('basic', async t => {
