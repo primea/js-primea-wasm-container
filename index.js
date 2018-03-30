@@ -25,8 +25,6 @@ function generateWrapper (funcRef, container) {
   }
   let wrapper = typeCheckWrapper(funcRef.params)
   const wasm = json2wasm(wrapper)
-  const fs = require('fs')
-  fs.writeFileSync('./checker.wasm', wasm)
   const mod = WebAssembly.Module(wasm)
   const self = funcRef
   wrapper = WebAssembly.Instance(mod, {

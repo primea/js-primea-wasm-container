@@ -28,7 +28,6 @@ class TestWasmContainer extends WasmContainer {
           tester.equals(a, b)
         },
         print: (dataRef) => {
-          console.log(dataRef, self.refs)
           let buf = self.refs.get(dataRef, 'data')
           console.log(buf.toString())
         }
