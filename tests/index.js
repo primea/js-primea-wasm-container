@@ -5,11 +5,10 @@ const {Message} = require('primea-objects')
 const Hypervisor = require('primea-hypervisor')
 const WasmContainer = require('../')
 
-const annotations = require('primea-annotations')
 const level = require('level-browserify')
 const RadixTree = require('dfinity-radix-tree')
-const db = level('./testdb')
 
+const db = level(__dirname + '/testdb')
 const WASM_PATH = path.join(__dirname, 'wasm')
 
 let tester
@@ -299,4 +298,27 @@ tape('load / store globals', async t => {
     })
     hypervisor.send(message)
   })
+})
+
+tape('creation', async t => {
+  t.plan(1)
+  tester = t
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/creation.wasm')
+  let receiver = fs.readFileSync(WASM_PATH + '/reciever.wasm')
+
+  const hypervisor = new Hypervisor(tree)
+  hypervisor.registerContainer(TestWasmContainer)
+
+  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  const funcRef = module.getFuncRef('main')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef,
+    funcArguments: [receiver]
+  }).on('execution:error', e => {
+    console.log(e)
+  })
+  hypervisor.send(message)
 })

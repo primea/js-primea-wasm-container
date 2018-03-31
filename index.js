@@ -143,8 +143,9 @@ module.exports = class WasmContainer {
       },
       module: {
         new: dataRef => {
-          const mod = self.actor.createActor(dataRef)
-          return self.refs.add(mod, 'mod')
+          const bin = self.refs.get(dataRef, 'data')
+          const {module} = self.actor.createActor(WasmContainer.typeId, bin)
+          return self.refs.add(module, 'mod')
         },
         export: (modRef, dataRef) => {
           const mod = self.refs.get(modRef, 'mod')

@@ -5,7 +5,6 @@
   (import "module" "self" (func $self (result i32)))
   (import "module" "export" (func $exports (param i32 i32) (result i32)))
   (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
-  (import "memory" "internalize" (func $mem.internalize (param i32 i32) (result i32)))
   (memory (export "memory") 1)
   (data (i32.const 0) "callback")
   (table (export "table") 1 1 anyfunc)
