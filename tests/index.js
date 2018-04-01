@@ -56,6 +56,27 @@ tape('i64', async t => {
   hypervisor.send(message)
 })
 
+tape('reintinalizing', async t => {
+  t.plan(1)
+  tester = t
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/reinternalize.wasm')
+
+  const hypervisor = new Hypervisor(tree)
+  hypervisor.registerContainer(TestWasmContainer)
+
+  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  const funcRef = module.getFuncRef('main')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef
+  }).on('execution:error', e => {
+    console.log(e)
+  })
+  hypervisor.send(message)
+})
+
 tape('basic', async t => {
   t.plan(1)
   tester = t
@@ -83,6 +104,7 @@ tape('basic', async t => {
   // const stateRoot = await hypervisor.createStateRoot()
   // t.deepEquals(stateRoot, expectedState, 'expected root!')
 })
+
 
 tape('empty', async t => {
   t.plan(1)

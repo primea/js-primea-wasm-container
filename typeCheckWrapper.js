@@ -188,13 +188,6 @@ function call_indirect (index) {
   }
 }
 
-function typeEntry (params = []) {
-  return {
-    form: 'func',
-    params: params
-  }
-}
-
 function end () {
   return {
     name: 'end'
@@ -204,20 +197,6 @@ function end () {
 function get_local (index) {
   return {
     name: 'get_local',
-    immediates: index
-  }
-}
-
-function get_global (index) {
-  return {
-    name: 'get_global',
-    immediates: index
-  }
-}
-
-function set_global (index) {
-  return {
-    name: 'set_global',
     immediates: index
   }
 }
@@ -235,17 +214,6 @@ function i64_const (num) {
     'return_type': 'i64',
     'name': 'const',
     'immediates': num
-  }
-}
-
-function i32_store () {
-  return {
-    'return_type': 'i32',
-    'name': 'store',
-    'immediates': {
-      'flags': 2,
-      'offset': 0
-    }
   }
 }
 
