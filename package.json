@@ -35,7 +35,7 @@
     "borc": "^2.0.2",
     "primea-annotations": "^0.0.3",
     "primea-objects": "^0.0.2",
-    "reference-map": "1.2.3",
+    "reference-map": "1.2.4",
     "wasm-json-toolkit": "^0.2.3",
     "wasm-metering": "^0.1.1"
   }
