@@ -1,10 +1,10 @@
+const {Message, FunctionRef, ModuleRef, DEFAULTS} = require('primea-objects')
 const {wasm2json, json2wasm} = require('wasm-json-toolkit')
 const annotations = require('primea-annotations')
 const wasmMetering = require('wasm-metering')
 const ReferanceMap = require('reference-map')
 const injectGlobals = require('./injectGlobals.js')
 const typeCheckWrapper = require('./typeCheckWrapper.js')
-const {Message, FunctionRef, ModuleRef, DEFAULTS} = require('primea-objects')
 
 const nativeTypes = new Set(['i32', 'i64', 'f32', 'f64'])
 const FUNC_INDEX_OFFSET = 1
@@ -125,8 +125,9 @@ module.exports = class WasmContainer {
           return func.gas
         },
         set_gas_budget: (funcRef, amount) => {
-          const func = self.refs.get(funcRef, 'func')
+          const func = self.refs.get(funcRef, 'func').copy()
           func.gas = amount
+          return self.refs.add(func, 'func')
         }
       },
       link: {
@@ -200,9 +201,9 @@ module.exports = class WasmContainer {
         usegas: amount => {
           self.actor.incrementTicks(amount)
           funcRef.gas -= amount
-          // if (funcRef.gas < 0) {
-          //   throw new Error('out of gas! :(')
-          // }
+          if (funcRef.gas < 0) {
+            throw new Error('out of gas! :(')
+          }
         }
       }
     }
