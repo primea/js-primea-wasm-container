@@ -248,22 +248,18 @@ module.exports = class WasmContainer {
       index++
     })
 
-    try {
-      // call entrypoint function
-      let wasmFunc
-      if (funcRef.identifier[0]) {
-        wasmFunc = this.instance.exports.table.get(funcRef.identifier[1])
-      } else {
-        wasmFunc = this.instance.exports[funcRef.identifier[1]]
-      }
-
-      const wrapper = generateWrapper(funcRef)
-      wrapper.exports.table.set(0, wasmFunc)
-      wrapper.exports.invoke(...args)
-      await this.onDone()
-    } catch (e) {
-      console.log(e)
+    // call entrypoint function
+    let wasmFunc
+    if (funcRef.identifier[0]) {
+      wasmFunc = this.instance.exports.table.get(funcRef.identifier[1])
+    } else {
+      wasmFunc = this.instance.exports[funcRef.identifier[1]]
     }
+
+    const wrapper = generateWrapper(funcRef)
+    wrapper.exports.table.set(0, wasmFunc)
+    wrapper.exports.invoke(...args)
+    await this.onDone()
     this.refs.clear()
   }
 
