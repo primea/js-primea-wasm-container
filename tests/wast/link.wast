@@ -6,6 +6,7 @@
   (import "storage" "set" (func $storage.set (param i32))) 
   (import "elem" "externalize" (func $elem.externalize (param i32 i32) (result i32)))
   (import "elem" "internalize" (func $elem.internalize (param i32 i32 i32 i32)))
+  (import "elem" "length" (func $elem.length (param i32) (result i32)))
   (import "func" "internalize" (func $func.internalize (param i32 i32)))
   (import "link" "wrap" (func $link.wrap (param i32) (result i32)))
   (import "link" "unwrap" (func $link.unwrap (param i32 i32)))
@@ -32,7 +33,7 @@
       (call $storage.get)
       (i32.const 0)   
       (i32.const 0)   
-      (i32.const 1))
+      (call $elem.length (call $storage.get)))
 
      (call $link.unwrap
        (i32.load (i32.const 0)) 
