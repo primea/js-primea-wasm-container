@@ -1,8 +1,9 @@
 const tape = require('tape')
 const fs = require('fs')
 const path = require('path')
-const {Message} = require('primea-objects')
+const {Message, FunctionRef} = require('primea-objects')
 const Hypervisor = require('primea-hypervisor')
+const EgressDriver = require('primea-hypervisor/egressDriver')
 const WasmContainer = require('../')
 
 const level = require('level-browserify')
@@ -302,7 +303,7 @@ tape('externalize/internalize table', async t => {
   hypervisor.send(message)
 })
 
-tape('load / store globals', async t => {
+tape.skip('load / store globals', async t => {
   t.plan(1)
   tester = t
   const tree = new RadixTree({
@@ -363,4 +364,42 @@ tape('creation', async t => {
     console.log(e)
   })
   hypervisor.send(message)
+})
+
+tape('storage', async t => {
+  // t.plan(1)
+  tester = t
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/storage.wasm')
+
+  const egress = new EgressDriver()
+
+  egress.on('message', msg => {
+    t.equals(msg.funcArguments[0].toString(), 'hello world')
+    t.end()
+  })
+
+  const hypervisor = new Hypervisor(tree, [TestWasmContainer], [egress])
+
+  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  const funcRef = module.getFuncRef('main')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef
+  })
+
+  hypervisor.send(message)
+
+  const funcRef2 = module.getFuncRef('load')
+  funcRef2.gas = 322000
+
+  await hypervisor.createStateRoot()
+
+  const message2 = new Message({
+    funcRef: funcRef2,
+    funcArguments: [new FunctionRef({actorID: egress.id, params: ['data']})]
+  }).on('execution:error', e => console.log(e))
+
+  hypervisor.send(message2)
 })
