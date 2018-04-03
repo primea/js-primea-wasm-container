@@ -136,7 +136,7 @@ module.exports = class WasmContainer {
           const link = self.refs.get(ref, 'link')
           const promise = self.actor.tree.graph.tree(link)
           await self.pushOpsQueue(promise)
-          const obj = (await promise)['/']
+          const obj = link['/']
           const linkRef = self.refs.add(obj, getType(obj))
           self.instance.exports.table.get(cb)(linkRef)
         }
