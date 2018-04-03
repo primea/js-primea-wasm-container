@@ -1,9 +1,8 @@
-const {Message, FunctionRef, ModuleRef, DEFAULTS} = require('primea-objects')
+const {Message, FunctionRef, ModuleRef, getType} = require('primea-objects')
 const {wasm2json, json2wasm} = require('wasm-json-toolkit')
 const annotations = require('primea-annotations')
 const wasmMetering = require('wasm-metering')
 const ReferanceMap = require('reference-map')
-const injectGlobals = require('./injectGlobals.js')
 const typeCheckWrapper = require('./typeCheckWrapper.js')
 
 const nativeTypes = new Set(['i32', 'i64', 'f32', 'f64'])
@@ -63,6 +62,7 @@ module.exports = class WasmContainer {
   constructor (actor) {
     this.actor = actor
     this.refs = new ReferanceMap()
+    this._opsQueue = Promise.resolve()
   }
 
   static createModule (wasm, id) {
@@ -76,10 +76,6 @@ module.exports = class WasmContainer {
       meterType: 'i32'
     })
 
-    // initialize the globals
-    if (json.persist.length) {
-      moduleJSON = injectGlobals(moduleJSON, json.persist)
-    }
     // recompile the wasm
     wasm = json2wasm(moduleJSON)
     const modRef = fromMetaJSON(json, id)
@@ -120,7 +116,7 @@ module.exports = class WasmContainer {
           const wrapper = generateWrapper(funcRef, self)
           self.instance.exports.table.set(index, wrapper.exports.check)
         },
-        get_gas_budget: (funcRef) => {
+        get_gas_budget: funcRef => {
           const func = self.refs.get(funcRef, 'func')
           return func.gas
         },
@@ -137,9 +133,12 @@ module.exports = class WasmContainer {
           return self.refs.add(link, 'link')
         },
         unwrap: async (ref, cb) => {
-          const obj = self.refs.get(ref, 'link')
-          const promise = self.actor.tree.dataStore.get(obj)
-          await self._opsQueue.push(promise)
+          const link = self.refs.get(ref, 'link')
+          const promise = self.actor.tree.graph.tree(link)
+          await self.pushOpsQueue(promise)
+          const obj = link['/']
+          const linkRef = self.refs.add(obj, getType(obj))
+          self.instance.exports.table.get(cb)(linkRef)
         }
       },
       module: {
@@ -188,13 +187,22 @@ module.exports = class WasmContainer {
         },
         internalize: (elemRef, srcOffset, sinkOffset, length) => {
           let table = self.refs.get(elemRef, 'elem')
-          const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj))
+          const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj, getType(obj)))
           const mem = self.get32Memory(sinkOffset, length)
           mem.set(buf)
         },
         length (elemRef) {
           let elem = self.refs.get(elemRef, 'elem')
           return elem.length
+        }
+      },
+      storage: {
+        get: () => {
+          return this.refs.add(this.actor.storage, getType(this.actor.storage))
+        },
+        set: ref => {
+          const object = this.refs.get(ref)
+          this.actor.storage = object
         }
       },
       metering: {
@@ -240,47 +248,18 @@ module.exports = class WasmContainer {
       index++
     })
 
-    // setup globals
-    let numOfGlobals = this.json.persist.length
-    if (numOfGlobals) {
-      const refs = []
-      while (numOfGlobals--) {
-        const obj = this.actor.storage[numOfGlobals] || DEFAULTS[this.json.persist[numOfGlobals].type]
-        refs.push(this.refs.add(obj, this.json.persist[numOfGlobals].type))
-      }
-      this.instance.exports.setter_globals(...refs)
+    // call entrypoint function
+    let wasmFunc
+    if (funcRef.identifier[0]) {
+      wasmFunc = this.instance.exports.table.get(funcRef.identifier[1])
+    } else {
+      wasmFunc = this.instance.exports[funcRef.identifier[1]]
     }
 
-    try {
-      // call entrypoint function
-      let wasmFunc
-      if (funcRef.identifier[0]) {
-        wasmFunc = this.instance.exports.table.get(funcRef.identifier[1])
-      } else {
-        wasmFunc = this.instance.exports[funcRef.identifier[1]]
-      }
-
-      const wrapper = generateWrapper(funcRef)
-      wrapper.exports.table.set(0, wasmFunc)
-      wrapper.exports.invoke(...args)
-      await this.onDone()
-    } catch (e) {
-      console.log(e)
-    }
-
-    // store globals
-    numOfGlobals = this.json.persist.length
-    if (numOfGlobals) {
-      const storage = []
-      this.instance.exports.getter_globals()
-      const mem = this.get32Memory(0, numOfGlobals)
-      while (numOfGlobals--) {
-        const ref = mem[numOfGlobals]
-        storage.push(this.refs.get(ref, this.json.persist[numOfGlobals].type))
-      }
-      this.actor.storage = storage
-    }
-
+    const wrapper = generateWrapper(funcRef)
+    wrapper.exports.table.set(0, wasmFunc)
+    wrapper.exports.invoke(...args)
+    await this.onDone()
     this.refs.clear()
   }
 

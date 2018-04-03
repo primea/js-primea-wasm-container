@@ -113,23 +113,23 @@ module.exports = function (params) {
     // check import
     importType.push('i32')
     importType.push('i32')
-    checkCode.push(i32_const(typeCode))
+    checkCode.push(i32Const(typeCode))
     if (baseType === 'i64') {
       importType.push('i32')
 
       // splits an i64 into 2 i32
       const spliti64 = [
-        get_local(index),
-        i64_const(32),
-        shr_u(),
-        wrap_i64(),
-        get_local(index),
-        wrap_i64()]
+        getLocal(index),
+        i64Const(32),
+        shrU(),
+        wrapI64(),
+        getLocal(index),
+        wrapI64()]
 
       checkCode = checkCode.concat(spliti64)
 
       const i32wrapCode = [
-        get_local(invokeIndex), {
+        getLocal(invokeIndex), {
           'return_type': 'i64',
           'name': 'extend_u/i32'
         }, {
@@ -140,7 +140,7 @@ module.exports = function (params) {
           'return_type': 'i64',
           'name': 'shl'
         },
-        get_local(++invokeIndex), {
+        getLocal(++invokeIndex), {
           'return_type': 'i64',
           'name': 'extend_u/i32'
         }, {
@@ -152,8 +152,8 @@ module.exports = function (params) {
       invokeCode = invokeCode.concat(i32wrapCode)
       invokerType.push('i32')
     } else {
-      checkCode.push(get_local(index))
-      invokeCode.push(get_local(invokeIndex))
+      checkCode.push(getLocal(index))
+      invokeCode.push(getLocal(invokeIndex))
     }
     invokerType.push('i32')
     // check export
@@ -164,8 +164,8 @@ module.exports = function (params) {
   })
 
   module[7].entries[0].code = checkCode.concat(setGlobals, [call(0), end()])
-  invokeCode.push(i32_const(0))
-  invokeCode.push(call_indirect(3))
+  invokeCode.push(i32Const(0))
+  invokeCode.push(callIndirect(3))
   invokeCode.push(end())
   module[7].entries[1].code = invokeCode
   return module
@@ -178,7 +178,7 @@ function call (index) {
   }
 }
 
-function call_indirect (index) {
+function callIndirect (index) {
   return {
     'name': 'call_indirect',
     'immediates': {
@@ -194,14 +194,14 @@ function end () {
   }
 }
 
-function get_local (index) {
+function getLocal (index) {
   return {
     name: 'get_local',
     immediates: index
   }
 }
 
-function i32_const (num) {
+function i32Const (num) {
   return {
     'return_type': 'i32',
     'name': 'const',
@@ -209,7 +209,7 @@ function i32_const (num) {
   }
 }
 
-function i64_const (num) {
+function i64Const (num) {
   return {
     'return_type': 'i64',
     'name': 'const',
@@ -217,14 +217,14 @@ function i64_const (num) {
   }
 }
 
-function shr_u() {
+function shrU () {
   return {
     'return_type': 'i64',
     'name': 'shr_u'
   }
 }
 
-function wrap_i64() {
+function wrapI64 () {
   return {
     'return_type': 'i32',
     'name': 'wrap/i64'
