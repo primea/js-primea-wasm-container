@@ -403,3 +403,40 @@ tape('storage', async t => {
 
   hypervisor.send(message2)
 })
+
+tape('link', async t => {
+  tester = t
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/link.wasm')
+
+  const egress = new EgressDriver()
+
+  egress.on('message', msg => {
+    t.equals(msg.funcArguments[0].toString(), 'hello world')
+    t.end()
+  })
+
+  const hypervisor = new Hypervisor(tree, [TestWasmContainer], [egress])
+
+  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  const funcRef = module.getFuncRef('main')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef
+  })
+
+  hypervisor.send(message)
+
+  const funcRef2 = module.getFuncRef('load')
+  funcRef2.gas = 322000
+
+  await hypervisor.createStateRoot()
+
+  const message2 = new Message({
+    funcRef: funcRef2,
+    funcArguments: [new FunctionRef({actorID: egress.id, params: ['data']})]
+  }).on('execution:error', e => console.log(e))
+
+  hypervisor.send(message2)
+})

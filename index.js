@@ -62,6 +62,7 @@ module.exports = class WasmContainer {
   constructor (actor) {
     this.actor = actor
     this.refs = new ReferanceMap()
+    this._opsQueue = Promise.resolve()
   }
 
   static createModule (wasm, id) {
@@ -132,9 +133,12 @@ module.exports = class WasmContainer {
           return self.refs.add(link, 'link')
         },
         unwrap: async (ref, cb) => {
-          const obj = self.refs.get(ref, 'link')
-          const promise = self.actor.tree.graph.tree(obj)
-          await self._opsQueue.push(promise)
+          const link = self.refs.get(ref, 'link')
+          const promise = self.actor.tree.graph.tree(link)
+          await self.pushOpsQueue(promise)
+          const obj = (await promise)['/']
+          const linkRef = self.refs.add(obj, getType(obj))
+          self.instance.exports.table.get(cb)(linkRef)
         }
       },
       module: {
