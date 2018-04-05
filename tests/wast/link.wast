@@ -1,6 +1,4 @@
 (module
-  (import "test" "check" (func $check (param i32 i32)))
-  (import "test" "print" (func $print (param i32)))
   (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
   (import "storage" "get" (func $storage.get (result i32)))
   (import "storage" "set" (func $storage.set (param i32))) 

@@ -19,11 +19,8 @@ class TestWasmContainer extends WasmContainer {
   constructor (actor) {
     super(actor)
     this._storage = new Map()
-  }
-  getInterface (funcRef) {
-    const orginal = super.getInterface(funcRef)
     const self = this
-    return Object.assign(orginal, {
+    const inter = {
       test: {
         check: (a, b) => {
           tester.equals(a, b)
@@ -33,7 +30,8 @@ class TestWasmContainer extends WasmContainer {
           console.log(buf.toString())
         }
       }
-    })
+    }
+    this.interface = Object.assign(this.interface, inter)
   }
 }
 

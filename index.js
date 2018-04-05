@@ -63,37 +63,8 @@ module.exports = class WasmContainer {
     this.actor = actor
     this.refs = new ReferenceMap()
     this._opsQueue = Promise.resolve()
-  }
-
-  static createModule (wasm, id) {
-    if (!WebAssembly.validate(wasm)) {
-      throw new Error('invalid wasm binary')
-    }
-
-    let moduleJSON = wasm2json(wasm)
-    const json = annotations.mergeTypeSections(moduleJSON)
-    moduleJSON = wasmMetering.meterJSON(moduleJSON, {
-      meterType: 'i32'
-    })
-
-    // recompile the wasm
-    wasm = json2wasm(moduleJSON)
-    const modRef = fromMetaJSON(json, id)
-    return {
-      wasm,
-      json,
-      modRef
-    }
-  }
-
-  static onCreation (unverifiedWasm, id, tree) {
-    const {modRef} = this.createModule(unverifiedWasm, id)
-    return modRef
-  }
-
-  getInterface (funcRef) {
     const self = this
-    return {
+    this.interface = {
       func: {
         externalize: index => {
           const func = self.instance.exports.table.get(index)
@@ -211,8 +182,8 @@ module.exports = class WasmContainer {
             throw new Error('no negative gas!')
           }
           self.actor.incrementTicks(amount)
-          funcRef.gas -= amount
-          if (funcRef.gas < 0) {
+          self.funcRef.gas -= amount
+          if (self.funcRef.gas < 0) {
             throw new Error('out of gas! :(')
           }
         }
@@ -220,10 +191,35 @@ module.exports = class WasmContainer {
     }
   }
 
+  static createModule (wasm, id) {
+    if (!WebAssembly.validate(wasm)) {
+      throw new Error('invalid wasm binary')
+    }
+
+    let moduleJSON = wasm2json(wasm)
+    const json = annotations.mergeTypeSections(moduleJSON)
+    moduleJSON = wasmMetering.meterJSON(moduleJSON, {
+      meterType: 'i32'
+    })
+
+    // recompile the wasm
+    wasm = json2wasm(moduleJSON)
+    const modRef = fromMetaJSON(json, id)
+    return {
+      wasm,
+      json,
+      modRef
+    }
+  }
+
+  static onCreation (unverifiedWasm, id, tree) {
+    const {modRef} = this.createModule(unverifiedWasm, id)
+    return modRef
+  }
+
   async onMessage (message) {
-    const funcRef = message.funcRef
-    const intef = this.getInterface(funcRef)
-    this.instance = WebAssembly.Instance(this.mod, intef)
+    this.funcRef = message.funcRef
+    this.instance = WebAssembly.Instance(this.mod, this.interface)
     // map table indexes
     const table = this.instance.exports.table
     if (table) {
@@ -238,7 +234,7 @@ module.exports = class WasmContainer {
     // import references
     let index = 0
     const args = []
-    message.funcRef.params.forEach(type => {
+    this.funcRef.params.forEach(type => {
       const arg = message.funcArguments[index]
       if (nativeTypes.has(type)) {
         args.push(arg)
@@ -253,13 +249,13 @@ module.exports = class WasmContainer {
 
     // call entrypoint function
     let wasmFunc
-    if (funcRef.identifier[0]) {
-      wasmFunc = this.instance.exports.table.get(funcRef.identifier[1])
+    if (this.funcRef.identifier[0]) {
+      wasmFunc = this.instance.exports.table.get(this.funcRef.identifier[1])
     } else {
-      wasmFunc = this.instance.exports[funcRef.identifier[1]]
+      wasmFunc = this.instance.exports[this.funcRef.identifier[1]]
     }
 
-    const wrapper = generateWrapper(funcRef)
+    const wrapper = generateWrapper(this.funcRef)
     wrapper.exports.table.set(0, wasmFunc)
     wrapper.exports.invoke(...args)
     await this.onDone()
