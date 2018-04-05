@@ -2,7 +2,7 @@ const {Message, FunctionRef, ModuleRef, getType} = require('primea-objects')
 const {wasm2json, json2wasm} = require('wasm-json-toolkit')
 const annotations = require('primea-annotations')
 const wasmMetering = require('wasm-metering')
-const ReferanceMap = require('reference-map')
+const ReferenceMap = require('reference-map')
 const typeCheckWrapper = require('./typeCheckWrapper.js')
 
 const nativeTypes = new Set(['i32', 'i64', 'f32', 'f64'])
@@ -61,7 +61,7 @@ function generateWrapper (funcRef, container) {
 module.exports = class WasmContainer {
   constructor (actor) {
     this.actor = actor
-    this.refs = new ReferanceMap()
+    this.refs = new ReferenceMap()
     this._opsQueue = Promise.resolve()
   }
 
@@ -207,6 +207,9 @@ module.exports = class WasmContainer {
       },
       metering: {
         usegas: amount => {
+          if (amount < 0) {
+            throw new Error('no negative gas!')
+          }
           self.actor.incrementTicks(amount)
           funcRef.gas -= amount
           if (funcRef.gas < 0) {
