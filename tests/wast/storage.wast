@@ -21,11 +21,10 @@
 
    (func $load (param $egress i32)
      (call $elem.internalize
-      (call $storage.get)
-      (i32.const 0)   
       (i32.const 0)   
       (i32.const 1)   
-    )
+      (call $storage.get)
+      (i32.const 0))
 
     (call $func.internalize
       (i32.const 0)

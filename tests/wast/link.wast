@@ -30,10 +30,10 @@
       (set_global $egressRef (get_local $egress))
 
      (call $elem.internalize
-      (call $storage.get)
       (i32.const 0)   
-      (i32.const 0)   
-      (call $elem.length (call $storage.get)))
+      (call $elem.length (call $storage.get))
+      (call $storage.get)  
+      (i32.const 0))
 
      (call $link.unwrap
        (i32.load (i32.const 0)) 

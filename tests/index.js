@@ -393,7 +393,6 @@ tape('invalid binary', async t => {
 })
 
 tape('out of gas', async t => {
-  t.plan(1)
   tester = t
   const tree = new RadixTree({db})
   let wasm = fs.readFileSync(WASM_PATH + '/i64.wasm')
@@ -407,7 +406,7 @@ tape('out of gas', async t => {
   const message = new Message({
     funcRef
   }).on('execution:error', e => {
-    t.pass()
+    t.end()
   })
   hypervisor.send(message)
 })

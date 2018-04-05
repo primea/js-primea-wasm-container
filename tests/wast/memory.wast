@@ -7,12 +7,13 @@
   (func $test
     (local $dataRef i32)
     (call $internalize
-      (tee_local $dataRef
-        (call $externalize
-          (i32.const 0)
-          (i32.const 4)))
-      (i32.const 0) 
-      (i32.const 5)
-      (call $length (get_local $dataRef)))
+      (i32.const 5) 
+      (call $length 
+        (tee_local $dataRef
+          (call $externalize
+            (i32.const 0)
+            (i32.const 4))))
+      (get_local $dataRef)
+      (i32.const 0))
   )
   (export "test" (func $test)))

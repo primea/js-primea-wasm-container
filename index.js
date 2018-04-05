@@ -163,7 +163,7 @@ module.exports = class WasmContainer {
           const data = Buffer.from(this.get8Memory(index, length))
           return self.refs.add(data, 'data')
         },
-        internalize: (dataRef, srcOffset, sinkOffset, length) => {
+        internalize: (sinkOffset, length, dataRef, srcOffset) => {
           let data = self.refs.get(dataRef, 'data')
           data = data.subarray(srcOffset, length)
           const mem = self.get8Memory(sinkOffset, data.length)
@@ -185,7 +185,7 @@ module.exports = class WasmContainer {
           }
           return this.refs.add(objects, 'elem')
         },
-        internalize: (elemRef, srcOffset, sinkOffset, length) => {
+        internalize: (sinkOffset, length, elemRef, srcOffset) => {
           let table = self.refs.get(elemRef, 'elem')
           const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj, getType(obj)))
           const mem = self.get32Memory(sinkOffset, length)
