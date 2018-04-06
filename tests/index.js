@@ -107,15 +107,13 @@ tape('basic', async t => {
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
   const funcRef = module.getFuncRef('receive')
-  funcRef.gas = 300
+  funcRef.gas = 3000
 
   const message = new Message({
     funcRef,
     funcArguments: [5]
   })
   hypervisor.send(message)
-  // const stateRoot = await hypervisor.createStateRoot()
-  // t.deepEquals(stateRoot, expectedState, 'expected root!')
 })
 
 tape('empty', async t => {
@@ -134,7 +132,7 @@ tape('empty', async t => {
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
   const funcRef = module.getFuncRef('receive')
-  funcRef.gas = 300
+  funcRef.gas = 3000
 
   const message = new Message({
     funcRef,
