@@ -178,9 +178,6 @@ module.exports = class WasmContainer {
       },
       metering: {
         usegas: amount => {
-          if (amount < 0) {
-            throw new Error('no negative gas!')
-          }
           self.actor.incrementTicks(amount)
           self.funcRef.gas -= amount
           if (self.funcRef.gas < 0) {

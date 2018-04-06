@@ -408,3 +408,18 @@ tape('out of gas', async t => {
   })
   hypervisor.send(message)
 })
+
+tape('negative gas', async t => {
+  t.plan(1)
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/negative_gas.wasm')
+
+  const hypervisor = new Hypervisor(tree)
+  hypervisor.registerContainer(TestWasmContainer)
+
+  try {
+    await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  } catch (e) {
+    t.pass(e.message)
+  }
+})

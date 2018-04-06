@@ -20,6 +20,9 @@ function filesWast2wasm () {
       const mod = wabt.parseWat('module.wast', wat)
       const r = mod.toBinary({log: true})
       let binary = Buffer.from(r.buffer)
+      if (!WebAssembly.validate(binary)) {
+        throw new Error('invalid wasm binary')
+      }
       if (json) {
         console.log(json)
         binary = annotations.encodeAndInject(json, binary)
