@@ -179,10 +179,6 @@ module.exports = class WasmContainer {
       metering: {
         usegas: amount => {
           self.actor.incrementTicks(amount)
-          self.funcRef.gas -= amount
-          if (self.funcRef.gas < 0) {
-            throw new Error('out of gas! :(')
-          }
         }
       }
     }
@@ -209,7 +205,7 @@ module.exports = class WasmContainer {
     }
   }
 
-  static onCreation (unverifiedWasm, id, tree) {
+  static onCreation (unverifiedWasm, id) {
     const {modRef} = this.createModule(unverifiedWasm, id)
     return modRef
   }

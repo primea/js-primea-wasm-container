@@ -41,7 +41,9 @@ tape('i64', async t => {
   const tree = new RadixTree({db})
   let wasm = fs.readFileSync(WASM_PATH + '/i64.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({
+    tree
+  })
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -60,7 +62,7 @@ tape('get_gas_budget', async t => {
   const tree = new RadixTree({db})
   let wasm = fs.readFileSync(WASM_PATH + '/get_gas_budget.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -79,7 +81,7 @@ tape('reintinalizing', async t => {
   const tree = new RadixTree({db})
   let wasm = fs.readFileSync(WASM_PATH + '/reinternalize.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -102,7 +104,7 @@ tape('basic', async t => {
 
   const wasm = fs.readFileSync(WASM_PATH + '/reciever.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -127,7 +129,7 @@ tape('empty', async t => {
 
   const wasm = fs.readFileSync(WASM_PATH + '/empty.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -152,7 +154,7 @@ tape('two communicating actors', async t => {
   const recieverWasm = fs.readFileSync(WASM_PATH + '/reciever.wasm')
   const callerWasm = fs.readFileSync(WASM_PATH + '/caller.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module: receiverMod} = await hypervisor.createActor(TestWasmContainer.typeId, recieverWasm)
@@ -180,7 +182,7 @@ tape('two communicating actors with callback', async t => {
   const recieverWasm = fs.readFileSync(WASM_PATH + '/funcRef_reciever.wasm')
   const callerWasm = fs.readFileSync(WASM_PATH + '/funcRef_caller.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module: callerMod} = await hypervisor.createActor(TestWasmContainer.typeId, callerWasm)
@@ -210,7 +212,7 @@ tape('two communicating actors with private callback', async t => {
   const recieverWasm = fs.readFileSync(WASM_PATH + '/funcRef_reciever.wasm')
   const callerWasm = fs.readFileSync(WASM_PATH + '/private_caller.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module: callerMod} = await hypervisor.createActor(TestWasmContainer.typeId, callerWasm)
@@ -238,7 +240,7 @@ tape('externalize/internalize memory', async t => {
 
   const wasm = fs.readFileSync(WASM_PATH + '/memory.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -261,7 +263,7 @@ tape('externalize/internalize table', async t => {
   })
 
   const wasm = fs.readFileSync(WASM_PATH + '/table.wasm')
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -284,7 +286,7 @@ tape('creation', async t => {
   let wasm = fs.readFileSync(WASM_PATH + '/creation.wasm')
   let receiver = fs.readFileSync(WASM_PATH + '/reciever.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -310,7 +312,11 @@ tape('storage', async t => {
     t.end()
   })
 
-  const hypervisor = new Hypervisor(tree, [TestWasmContainer], [egress])
+  const hypervisor = new Hypervisor({
+    tree,
+    containers: [TestWasmContainer],
+    drivers: [egress]
+  })
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
   const funcRef = module.getFuncRef('main')
@@ -347,7 +353,11 @@ tape('link', async t => {
     t.end()
   })
 
-  const hypervisor = new Hypervisor(tree, [TestWasmContainer], [egress])
+  const hypervisor = new Hypervisor({
+    tree,
+    containers: [TestWasmContainer],
+    drivers: [egress]
+  })
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
   const funcRef = module.getFuncRef('main')
@@ -378,7 +388,7 @@ tape('invalid binary', async t => {
   const tree = new RadixTree({db})
   const wasm = Buffer.from([0])
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   try {
@@ -393,7 +403,7 @@ tape('out of gas', async t => {
   const tree = new RadixTree({db})
   let wasm = fs.readFileSync(WASM_PATH + '/i64.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
@@ -412,7 +422,7 @@ tape('negative gas', async t => {
   const tree = new RadixTree({db})
   let wasm = fs.readFileSync(WASM_PATH + '/negative_gas.wasm')
 
-  const hypervisor = new Hypervisor(tree)
+  const hypervisor = new Hypervisor({tree})
   hypervisor.registerContainer(TestWasmContainer)
 
   try {
