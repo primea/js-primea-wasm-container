@@ -23,7 +23,7 @@
   ],
   "devDependencies": {
     "coveralls": "^3.0.0",
-    "dfinity-radix-tree": "0.2.1",
+    "dfinity-radix-tree": "0.2.2",
     "level-browserify": "^1.1.2",
     "nyc": "^11.6.0",
     "primea-hypervisor": "^0.7.0",
