@@ -67,6 +67,10 @@ module.exports = class WasmContainer {
     this.interface = {
       func: {
         externalize: index => {
+          if (!self.instance.exports.table) {
+            throw new Error('no table exported')
+          }
+
           const func = self.instance.exports.table.get(index)
           const object = func.object
           if (object) {
@@ -227,6 +231,10 @@ module.exports = class WasmContainer {
     // import references
     let index = 0
     const args = []
+
+    if (this.funcRef.params == null) {
+      throw new Error(`function "${this.funcRef.identifier[1]}" not found`)
+    }
     this.funcRef.params.forEach(type => {
       const arg = message.funcArguments[index]
       if (nativeTypes.has(type)) {
@@ -286,11 +294,25 @@ module.exports = class WasmContainer {
   }
 
   get8Memory (offset, length) {
-    return new Uint8Array(this.instance.exports.memory.buffer, offset, length)
+    if (!this.instance.exports.memory) {
+      throw new Error('no memory exported')
+    }
+    try {
+      return new Uint8Array(this.instance.exports.memory.buffer, offset, length)
+    } catch (e) {
+      throw new Error(`invalid memory range (offset=${offset}, length=${length})`)
+    }
   }
 
   get32Memory (offset, length) {
-    return new Uint32Array(this.instance.exports.memory.buffer, offset, length)
+    if (!this.instance.exports.memory) {
+      throw new Error('no memory exported')
+    }
+    try {
+      return new Uint32Array(this.instance.exports.memory.buffer, offset, length)
+    } catch (e) {
+      throw new Error(`invalid memory range (offset=${offset}, length=${length})`)
+    }
   }
 
   static get typeId () {
