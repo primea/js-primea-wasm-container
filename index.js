@@ -22,6 +22,9 @@ function generateWrapper (funcRef, container) {
   if (funcRef.wrapper) {
     return funcRef.wrapper
   }
+  if (funcRef.params == undefined) {
+    throw new Error('invalid funcRef')
+  }
   let wrapper = typeCheckWrapper(funcRef.params)
   const wasm = json2wasm(wrapper)
   const mod = WebAssembly.Module(wasm)
