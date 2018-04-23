@@ -22,7 +22,7 @@ function generateWrapper (funcRef, container) {
   if (funcRef.wrapper) {
     return funcRef.wrapper
   }
-  if (funcRef.params == undefined) {
+  if (funcRef.params == null) {
     throw new Error('invalid funcRef')
   }
   let wrapper = typeCheckWrapper(funcRef.params)
