@@ -35,7 +35,7 @@
     "primea-annotations": "^0.0.3",
     "primea-objects": "^0.0.4",
     "reference-map": "1.2.6",
-    "wasm-json-toolkit": "^0.2.3",
+    "wasm-json-toolkit": "^0.3.0",
     "wasm-metering": "^0.2.1"
   }
 }
