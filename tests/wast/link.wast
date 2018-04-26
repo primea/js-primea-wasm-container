@@ -1,13 +1,12 @@
 (module
   (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
-  (import "storage" "get" (func $storage.get (result i32)))
-  (import "storage" "set" (func $storage.set (param i32))) 
   (import "elem" "externalize" (func $elem.externalize (param i32 i32) (result i32)))
   (import "elem" "internalize" (func $elem.internalize (param i32 i32 i32 i32)))
   (import "elem" "length" (func $elem.length (param i32) (result i32)))
   (import "func" "internalize" (func $func.internalize (param i32 i32)))
   (import "link" "wrap" (func $link.wrap (param i32) (result i32)))
   (import "link" "unwrap" (func $link.unwrap (param i32 i32)))
+  (global $storage (mut i32) (i32.const 9))
 
   (memory (export "memory") 1)
   (data (i32.const 0) "hello world")
@@ -21,7 +20,7 @@
       (call $link.wrap
         (call $mem.externalize (i32.const 0) (i32.const 11))))
 
-    (call $storage.set
+    (set_global $storage
       (call $elem.externalize (i32.const 0) (i32.const 1))))
 
    (func $load (param $egress i32)
@@ -29,8 +28,8 @@
 
      (call $elem.internalize
       (i32.const 0)   
-      (call $elem.length (call $storage.get))
-      (call $storage.get)  
+      (call $elem.length (get_global $storage))
+      (get_global $storage)  
       (i32.const 0))
 
      (call $link.unwrap

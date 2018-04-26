@@ -118,33 +118,6 @@ tape('basic', async t => {
   hypervisor.send(message)
 })
 
-tape('empty', async t => {
-  t.plan(1)
-  tester = t
-  const expectedState = Buffer.from('bb15867b26293aa36c774b8c82541dd64212ba9a', 'hex')
-
-  const tree = new RadixTree({
-    db
-  })
-
-  const wasm = fs.readFileSync(WASM_PATH + '/empty.wasm')
-
-  const hypervisor = new Hypervisor({tree})
-  hypervisor.registerContainer(TestWasmContainer)
-
-  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
-  const funcRef = module.getFuncRef('receive')
-  funcRef.gas = 3000
-
-  const message = new Message({
-    funcRef,
-    funcArguments: [5]
-  })
-  hypervisor.send(message)
-  const stateRoot = await hypervisor.createStateRoot()
-  t.deepEquals(stateRoot, expectedState, 'expected root!')
-})
-
 tape('two communicating actors', async t => {
   t.plan(1)
   tester = t
@@ -190,7 +163,7 @@ tape('two communicating actors with callback', async t => {
 
   const callFuncRef = callerMod.getFuncRef('call')
   const recvFuncRef = receiverMod.getFuncRef('receive')
-  callFuncRef.gas = 100000
+  callFuncRef.gas = 1000000
   recvFuncRef.gas = 100000
 
   const message = new Message({
@@ -220,7 +193,7 @@ tape('two communicating actors with private callback', async t => {
 
   const callFuncRef = callerMod.getFuncRef('call')
   const recvFuncRef = receiverMod.getFuncRef('receive')
-  callFuncRef.gas = 100000
+  callFuncRef.gas = 1000000
   recvFuncRef.gas = 100000
 
   const message = new Message({
@@ -298,47 +271,6 @@ tape('creation', async t => {
     funcArguments: [receiver]
   })
   hypervisor.send(message)
-})
-
-tape('storage', async t => {
-  tester = t
-  const tree = new RadixTree({db})
-  let wasm = fs.readFileSync(WASM_PATH + '/storage.wasm')
-
-  const egress = new EgressDriver()
-
-  egress.on('message', msg => {
-    t.equals(msg.funcArguments[0].toString(), 'hello world')
-    t.end()
-  })
-
-  const hypervisor = new Hypervisor({
-    tree,
-    containers: [TestWasmContainer],
-    drivers: [egress]
-  })
-
-  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
-  const funcRef = module.getFuncRef('main')
-  funcRef.gas = 322000
-
-  const message = new Message({
-    funcRef
-  })
-
-  hypervisor.send(message)
-
-  const funcRef2 = module.getFuncRef('load')
-  funcRef2.gas = 322000
-
-  await hypervisor.createStateRoot()
-
-  const message2 = new Message({
-    funcRef: funcRef2,
-    funcArguments: [new FunctionRef({actorID: egress.id, params: ['data']})]
-  })
-
-  hypervisor.send(message2)
 })
 
 tape('link', async t => {
@@ -430,4 +362,38 @@ tape('negative gas', async t => {
   } catch (e) {
     t.pass(e.message)
   }
+})
+
+tape('persitant globals', async t => {
+  tester = t
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/persistantGlobals.wasm')
+
+  const hypervisor = new Hypervisor({
+    tree,
+    containers: [TestWasmContainer]
+  })
+
+  const {module} = await hypervisor.createActor(TestWasmContainer.typeId, wasm)
+  const funcRef = module.getFuncRef('e')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef
+  })
+
+  hypervisor.send(message)
+  hypervisor.scheduler.on('idle', async () => {
+    const actor = await hypervisor.loadActor(module.id)
+    t.deepEquals(actor.storage, [[], 5, [0, 3]])
+  })
+
+  hypervisor.send(message)
+
+  hypervisor.scheduler.on('idle', async () => {
+    const actor = await hypervisor.loadActor(module.id)
+    t.deepEquals(actor.storage, [[], 5, [0, 3]])
+  })
+
+  t.end()
 })

@@ -2,11 +2,16 @@
   "types": [{
     "form": "func",
     "params": [
-      "func"
+      "anyref"
     ]
   }],
   "typeMap": [{
     "func": 1,
     "type": 0
+  }],
+  "persist": [{
+    "form": "global",
+    "index": 0,
+    "type": "anyref"
   }]
 }

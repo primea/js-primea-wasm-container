@@ -2,7 +2,7 @@
   "types": [{
     "form": "func",
     "params": [
-      "func"
+      "anyref"
     ]
   }],
   "typeMap": [{

@@ -1,0 +1,17 @@
+{
+  "types": [],
+  "typeMap": [],
+  "persist": [{
+    "form": "global",
+    "index": 0,
+    "type": "anyref"
+  },{
+    "form": "global",
+    "index": 1,
+    "type": "i32"
+  }, {
+    "form": "global",
+    "index": 3,
+    "type": "i64"
+  }]
+}

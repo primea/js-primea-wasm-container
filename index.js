@@ -1,6 +1,7 @@
 const {Message, FunctionRef, ModuleRef, getType} = require('primea-objects')
 const {wasm2json, json2wasm} = require('wasm-json-toolkit')
 const annotations = require('primea-annotations')
+const persist = require('wasm-persist')
 const wasmMetering = require('wasm-metering')
 const ReferenceMap = require('reference-map')
 const typeCheckWrapper = require('./typeCheckWrapper.js')
@@ -38,7 +39,7 @@ function generateWrapper (funcRef, container) {
           const type = annotations.LANGUAGE_TYPES_BIN[args.shift()]
           let arg = args.shift()
           if (!nativeTypes.has(type)) {
-            arg = container.refs.get(arg, type)
+            arg = container.refs.get(arg)
             checkedArgs.push(arg)
           } else if (type === 'i64') {
             checkedArgs.push(arg)
@@ -174,15 +175,6 @@ module.exports = class WasmContainer {
           return elem.length
         }
       },
-      storage: {
-        get: () => {
-          return this.refs.add(this.actor.storage, getType(this.actor.storage))
-        },
-        set: ref => {
-          const object = this.refs.get(ref)
-          this.actor.storage = object
-        }
-      },
       metering: {
         usegas: amount => {
           self.actor.incrementTicks(amount)
@@ -204,22 +196,45 @@ module.exports = class WasmContainer {
 
     // recompile the wasm
     wasm = json2wasm(moduleJSON)
+    const globals = []
+    json.persist.map(global => global.index).forEach(index => {
+      globals[index] = true
+    })
+
+    wasm = persist.prepare(wasm, {
+      memory: false,
+      table: false,
+      globals
+    })
     const modRef = fromMetaJSON(json, id)
     return {
       wasm,
       json,
-      modRef
+      modRef,
+      state: json.persist.map(entry => {
+        if (entry.type === 'anyref') {
+          return []
+        }
+      })
     }
   }
 
   static onCreation (unverifiedWasm, id) {
-    const {modRef} = this.createModule(unverifiedWasm, id)
-    return modRef
+    return this.createModule(unverifiedWasm, id)
   }
 
   async onMessage (message) {
     this.funcRef = message.funcRef
     this.instance = WebAssembly.Instance(this.mod, this.interface)
+    const state = this.json.persist.map((entry, index) => {
+      const obj = this.actor.storage[index]
+      if (entry.type === 'anyref') {
+        return this.refs.add(obj, getType(obj))
+      } else {
+        return obj
+      }
+    })
+    persist.resume(this.instance, {globals: state, symbol: '_'})
     // map table indexes
     const table = this.instance.exports.table
     if (table) {
@@ -235,9 +250,6 @@ module.exports = class WasmContainer {
     let index = 0
     const args = []
 
-    if (this.funcRef.params == null) {
-      throw new Error(`function "${this.funcRef.identifier[1]}" not found`)
-    }
     this.funcRef.params.forEach(type => {
       const arg = message.funcArguments[index]
       if (nativeTypes.has(type)) {
@@ -246,7 +258,7 @@ module.exports = class WasmContainer {
           args.push(message.funcArguments[++index])
         }
       } else {
-        args.push(this.refs.add(arg, type))
+        args.push(this.refs.add(arg, getType(arg)))
       }
       index++
     })
@@ -263,6 +275,17 @@ module.exports = class WasmContainer {
     wrapper.exports.table.set(0, wasmFunc)
     wrapper.exports.invoke(...args)
     await this.onDone()
+    // hibernate the wasm instance
+    let postState = persist.hibernate(this.instance)
+    // map the ints to objects
+    this.actor.storage = this.json.persist.map((entry, index) => {
+      const i = postState.globals[index]
+      if (entry.type === 'anyref') {
+        return this.refs.get(i)
+      } else {
+        return i
+      }
+    })
     this.refs.clear()
   }
 

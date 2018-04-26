@@ -3,7 +3,7 @@
     "form": "func",
     "params": [
       "i64",
-      "data"
+      "anyref"
     ]
   }],
   "typeMap": [{
