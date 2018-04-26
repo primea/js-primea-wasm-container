@@ -387,7 +387,7 @@ tape('persitant globals', async t => {
     const actor = await hypervisor.loadActor(module.id)
     t.deepEquals(actor.storage, [[], 5, [0, 3]])
   })
-
+  await hypervisor.createStateRoot()
   hypervisor.send(message)
 
   hypervisor.scheduler.on('idle', async () => {
