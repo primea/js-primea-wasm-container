@@ -32,7 +32,7 @@
     "wabt": "^1.0.0"
   },
   "dependencies": {
-    "primea-annotations": "^0.0.5",
+    "primea-annotations": "^0.0.6",
     "primea-objects": "^0.0.4",
     "reference-map": "1.2.6",
     "wasm-json-toolkit": "^0.3.0",
