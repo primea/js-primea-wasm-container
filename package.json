@@ -26,15 +26,15 @@
     "dfinity-radix-tree": "0.2.2",
     "level-browserify": "^1.1.2",
     "nyc": "^11.7.1",
-    "primea-hypervisor": "^0.7.1",
+    "primea-hypervisor": "git+ssh://git@github.com/dfinity/js-primea.git#actorRef",
     "standard": "^11.0.1",
     "tape": "^4.9.0",
     "wabt": "^1.0.0"
   },
   "dependencies": {
     "primea-annotations": "^0.0.6",
-    "primea-objects": "^0.0.5",
-    "reference-map": "1.2.6",
+    "primea-objects": "0.0.6",
+    "reference-map": "^1.2.6",
     "wasm-json-toolkit": "^0.3.0",
     "wasm-metering": "^0.2.1",
     "wasm-persist": "0.0.1"

@@ -1,6 +1,7 @@
 (module
-  (import "module" "export" (func $mod.exports (param i32 i32) (result i32)))
   (import "module" "new" (func $mod.new (param i32) (result i32)))
+  (import "actor" "new" (func $actor.new (param i32) (result i32)))
+  (import "actor" "export" (func $actor.exports (param i32 i32) (result i32)))
   (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
   (import "func" "internalize" (func $func.internalize (param i32 i32)))
   (import "func" "set_gas_budget" (func $set_gas_budget (param i32 i32) (result i32)))
@@ -11,11 +12,13 @@
     (call $func.internalize
       (i32.const 0)
       (call $set_gas_budget
-        (call $mod.exports
-                (call $mod.new (get_local $bin)) 
-                (call $mem.externalize (i32.const 0) (i32.const 7)))
+        (call $actor.exports
+          (call $actor.new
+            (call $mod.new
+              (get_local $bin)))
+          (call $mem.externalize (i32.const 0) (i32.const 7)))
         (i32.const 10500)))
-    
+
    (call_indirect (param i32)
      (i32.const 5)
      (i32.const 0)))
