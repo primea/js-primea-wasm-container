@@ -123,8 +123,8 @@ module.exports = class WasmContainer {
       module: {
         new: dataRef => {
           const bin = self.refs.get(dataRef, 'data')
-          const {module} = self.actor.createActor(WasmContainer.typeId, bin)
-          return self.refs.add(module, 'mod')
+          const mod = self.actor.createModule(bin)
+          return self.refs.add(mod, 'mod')
         },
         export: (modRef, dataRef) => {
           const mod = self.refs.get(modRef, 'mod')
@@ -135,6 +135,17 @@ module.exports = class WasmContainer {
         },
         self: () => {
           return self.refs.add(this.modSelf, 'mod')
+        }
+      },
+      actor: {
+        new: modRef => {
+          const module = self.refs.get(modRef, 'mod')
+          const {actor} = self.actor.createActor(WasmContainer.typeId, module)
+          return self.refs.add(actor, 'actor')
+        },
+        is_instance: (actorRef, modRef) => {
+          const actor = self.refs.get(actorRef, 'mod')
+          const module = self.refs.get(modRef, 'mod')
         }
       },
       memory: {
@@ -183,7 +194,8 @@ module.exports = class WasmContainer {
     }
   }
 
-  static createModule (wasm, id) {
+  static createModule (mod, id) {
+    let wasm = mod[1]
     if (!WebAssembly.validate(wasm)) {
       throw new Error('invalid wasm binary')
     }
@@ -208,6 +220,7 @@ module.exports = class WasmContainer {
     })
     const modRef = fromMetaJSON(json, id)
     return {
+      id: mod[0],
       wasm,
       json,
       modRef,
