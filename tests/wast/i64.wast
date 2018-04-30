@@ -3,8 +3,8 @@
   (import "test" "print" (func $print (param i32)))
   (import "func" "internalize" (func $func.internalize (param i32 i32)))
   (import "func" "set_gas_budget" (func $func.set_gas_budget (param i32 i32) (result i32)))
-  (import "module" "self" (func $self (result i32)))
-  (import "module" "export" (func $exports (param i32 i32) (result i32)))
+  (import "actor" "self" (func $self (result i32)))
+  (import "actor" "export" (func $exports (param i32 i32) (result i32)))
   (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
   (memory (export "memory") 1)
   (data (i32.const 0) "callback")
@@ -16,7 +16,7 @@
      (call $func.set_gas_budget
         (call $exports
           (call $self)
-          (tee_local $export_name 
+          (tee_local $export_name
             (call $mem.externalize (i32.const 0) (i32.const 8))))
         (i32.const 1000)))
 

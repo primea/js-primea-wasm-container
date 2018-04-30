@@ -1,5 +1,5 @@
-const {Message, FunctionRef, ModuleRef, getType} = require('primea-objects')
-const {wasm2json, json2wasm} = require('wasm-json-toolkit')
+const { ID, Message, FunctionRef, ModuleRef, ActorRef, getType } = require('primea-objects')
+const { wasm2json, json2wasm } = require('wasm-json-toolkit')
 const annotations = require('primea-annotations')
 const persist = require('wasm-persist')
 const wasmMetering = require('wasm-metering')
@@ -9,13 +9,13 @@ const typeCheckWrapper = require('./typeCheckWrapper.js')
 const nativeTypes = new Set(['i32', 'i64', 'f32', 'f64'])
 const FUNC_INDEX_OFFSET = 1
 
-function fromMetaJSON (json, id) {
+function getWasmExports (json) {
   const exports = {}
   for (const ex in json.exports) {
     const type = json.types[json.indexes[json.exports[ex].toString()]].params
     exports[ex] = type
   }
-  return new ModuleRef(exports, id)
+  return exports
 }
 
 function generateWrapper (funcRef, container) {
@@ -123,29 +123,30 @@ module.exports = class WasmContainer {
       module: {
         new: dataRef => {
           const bin = self.refs.get(dataRef, 'data')
-          const mod = self.actor.createModule(bin)
+          const mod = self.actor.createModule(WasmContainer, bin)
           return self.refs.add(mod, 'mod')
-        },
-        export: (modRef, dataRef) => {
-          const mod = self.refs.get(modRef, 'mod')
-          let name = self.refs.get(dataRef, 'data')
-          name = Buffer.from(name).toString()
-          const funcRef = mod.getFuncRef(name)
-          return self.refs.add(funcRef, 'func')
-        },
-        self: () => {
-          return self.refs.add(this.modSelf, 'mod')
         }
       },
       actor: {
         new: modRef => {
           const module = self.refs.get(modRef, 'mod')
-          const {actor} = self.actor.createActor(WasmContainer.typeId, module)
+          const actor = self.actor.createActor(module)
           return self.refs.add(actor, 'actor')
         },
+        export: (actorRef, dataRef) => {
+          const actor = self.refs.get(actorRef, 'actor')
+          let name = self.refs.get(dataRef, 'data')
+          name = Buffer.from(name).toString()
+          const funcRef = actor.getFuncRef(name)
+          return self.refs.add(funcRef, 'func')
+        },
         is_instance: (actorRef, modRef) => {
-          const actor = self.refs.get(actorRef, 'mod')
+          const actor = self.refs.get(actorRef, 'actor')
           const module = self.refs.get(modRef, 'mod')
+          return actor.modRef.id.id.equals(module.id.id)
+        },
+        self: () => {
+          return self.refs.add(this.actorSelf, 'actor')
         }
       },
       memory: {
@@ -194,8 +195,7 @@ module.exports = class WasmContainer {
     }
   }
 
-  static createModule (mod, id) {
-    let wasm = mod[1]
+  static createModule (wasm) {
     if (!WebAssembly.validate(wasm)) {
       throw new Error('invalid wasm binary')
     }
@@ -218,12 +218,11 @@ module.exports = class WasmContainer {
       table: false,
       globals
     })
-    const modRef = fromMetaJSON(json, id)
+    const exports = getWasmExports(json)
     return {
-      id: mod[0],
       wasm,
       json,
-      modRef,
+      exports,
       state: json.persist.map(entry => {
         if (entry.type === 'anyref') {
           return []
@@ -232,8 +231,8 @@ module.exports = class WasmContainer {
     }
   }
 
-  static onCreation (unverifiedWasm, id) {
-    return this.createModule(unverifiedWasm, id)
+  static onCreation (unverifiedWasm) {
+    return this.createModule(unverifiedWasm)
   }
 
   async onMessage (message) {
@@ -325,11 +324,15 @@ module.exports = class WasmContainer {
   }
 
   async onStartup () {
-    const code = this.actor.code
-    const {json, wasm, modRef} = WasmContainer.createModule(code, this.actor.id)
+    const module = this.actor.module
+    const code = module[1][1]['/']
+    const {json, wasm, exports} = WasmContainer.createModule(code)
     this.mod = WebAssembly.Module(wasm)
     this.json = json
-    this.modSelf = modRef
+    const moduleID = new ID(module[1][0])
+    const state = module[2]['/']
+    const modRef = new ModuleRef(moduleID, WasmContainer.typeId, exports, state, code)
+    this.actorSelf = new ActorRef(this.actor.id, modRef)
   }
 
   get8Memory (offset, length) {
