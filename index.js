@@ -326,11 +326,10 @@ module.exports = class WasmContainer {
   async onStartup () {
     const module = this.actor.module
     const code = module[1][1]['/']
-    const {json, wasm, exports} = WasmContainer.createModule(code)
+    const {json, wasm, exports, state} = WasmContainer.createModule(code)
     this.mod = WebAssembly.Module(wasm)
     this.json = json
     const moduleID = new ID(module[1][0])
-    const state = module[2]['/']
     const modRef = new ModuleRef(moduleID, WasmContainer.typeId, exports, state, code)
     this.actorSelf = new ActorRef(this.actor.id, modRef)
   }
