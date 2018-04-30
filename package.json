@@ -37,8 +37,8 @@
   },
   "dependencies": {
     "primea-annotations": "^0.0.6",
-    "primea-objects": "0.0.6",
-    "reference-map": "^1.2.6",
+    "primea-objects": "0.0.8",
+    "reference-map": "^1.2.7",
     "wasm-json-toolkit": "^0.3.0",
     "wasm-metering": "^0.2.1",
     "wasm-persist": "0.0.1"
