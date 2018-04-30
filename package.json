@@ -1,6 +1,6 @@
 {
   "name": "primea-wasm-container",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -15,6 +15,10 @@
     "globals": [
       "WebAssembly"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/primea/js-primea-wasm-container.git"
   },
   "keywords": [
     "wasm",
