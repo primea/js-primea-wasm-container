@@ -224,7 +224,7 @@ module.exports = class WasmContainer {
       json,
       exports,
       state: json.persist.map(entry => {
-        if (entry.type === 'anyref') {
+        if (!nativeTypes.has(entry.type)) {
           return []
         }
       })
@@ -240,7 +240,7 @@ module.exports = class WasmContainer {
     this.instance = new WebAssembly.Instance(this.mod, this.interface)
     const state = this.json.persist.map((entry, index) => {
       const obj = this.actor.storage[index]
-      if (entry.type === 'anyref') {
+      if (!nativeTypes.has(entry.type)) {
         return this.refs.add(obj, getType(obj))
       } else {
         return obj
@@ -298,7 +298,7 @@ module.exports = class WasmContainer {
     // map the ints to objects
     this.actor.storage = this.json.persist.map((entry, index) => {
       const i = postState.globals[index]
-      if (entry.type === 'anyref') {
+      if (!nativeTypes.has(entry.type)) {
         return this.refs.get(i)
       } else {
         return i
