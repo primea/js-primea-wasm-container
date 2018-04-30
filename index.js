@@ -149,7 +149,7 @@ module.exports = class WasmContainer {
           return self.refs.add(this.actorSelf, 'actor')
         }
       },
-      memory: {
+      data: {
         externalize: (index, length) => {
           const data = Buffer.from(this.get8Memory(index, length))
           return self.refs.add(data, 'data')

@@ -1,7 +1,7 @@
 (module
-  (import "memory" "externalize" (func $externalize (param i32 i32) (result i32)))
-  (import "memory" "internalize" (func $internalize (param i32 i32 i32 i32)))
-  (import "memory" "length" (func $length (param i32) (result i32)))
+  (import "data" "externalize" (func $externalize (param i32 i32) (result i32)))
+  (import "data" "internalize" (func $internalize (param i32 i32 i32 i32)))
+  (import "data" "length" (func $length (param i32) (result i32)))
   (memory (export "memory") 1)
   (data (i32.const 0) "test")
   (func $test

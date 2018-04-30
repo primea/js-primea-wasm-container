@@ -1,5 +1,5 @@
 (module
-  (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
+  (import "data" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
   (import "elem" "externalize" (func $elem.externalize (param i32 i32) (result i32)))
   (import "elem" "internalize" (func $elem.internalize (param i32 i32 i32 i32)))
   (import "elem" "length" (func $elem.length (param i32) (result i32)))

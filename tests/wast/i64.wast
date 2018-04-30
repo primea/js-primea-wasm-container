@@ -5,7 +5,7 @@
   (import "func" "set_gas_budget" (func $func.set_gas_budget (param i32 i32) (result i32)))
   (import "actor" "self" (func $self (result i32)))
   (import "actor" "export" (func $exports (param i32 i32) (result i32)))
-  (import "memory" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
+  (import "data" "externalize" (func $mem.externalize (param i32 i32) (result i32)))
   (memory (export "memory") 1)
   (data (i32.const 0) "callback")
   (table (export "table") 1 1 anyfunc)
