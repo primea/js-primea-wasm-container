@@ -291,6 +291,42 @@ tape('creation', async t => {
   hypervisor.send(message)
 })
 
+tape('is instance', async t => {
+  // t.plan(1)
+  tester = t
+  const tree = new RadixTree({db})
+  let wasm = fs.readFileSync(WASM_PATH + '/is_instance.wasm')
+  let receiver = fs.readFileSync(WASM_PATH + '/reciever.wasm')
+
+  const egress = new EgressDriver()
+
+  egress.on('message', msg => {
+    t.equals(msg.funcArguments[0].toString(), 'hello world')
+    t.end()
+  })
+
+  const hypervisor = new Hypervisor({
+    tree,
+    drivers: [egress],
+    modules: [TestWasmModule]
+  })
+
+  const actorRef = await hypervisor.newActor(TestWasmModule, wasm)
+  const funcRef = actorRef.getFuncRef('main')
+  funcRef.gas = 322000
+
+  const message = new Message({
+    funcRef,
+    funcArguments: [receiver, new FunctionRef({
+      actorID: egress.id,
+      params: ['data']
+    })]
+  })
+
+  hypervisor.send(message)
+  t.end()
+})
+
 tape('link', async t => {
   tester = t
   const tree = new RadixTree({db})
@@ -326,7 +362,10 @@ tape('link', async t => {
 
   const message2 = new Message({
     funcRef: funcRef2,
-    funcArguments: [new FunctionRef({actorID: egress.id, params: ['data']})]
+    funcArguments: [new FunctionRef({
+      actorID: egress.id,
+      params: ['data']
+    })]
   })
 
   hypervisor.send(message2)
