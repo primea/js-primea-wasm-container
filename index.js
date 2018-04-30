@@ -28,9 +28,9 @@ function generateWrapper (funcRef, container) {
   }
   let wrapper = typeCheckWrapper(funcRef.params)
   const wasm = json2wasm(wrapper)
-  const mod = WebAssembly.Module(wasm)
+  const mod = new WebAssembly.Module(wasm)
   const self = funcRef
-  wrapper = WebAssembly.Instance(mod, {
+  wrapper = new WebAssembly.Instance(mod, {
     'env': {
       'checkTypes': function () {
         const args = [...arguments]
@@ -237,7 +237,7 @@ module.exports = class WasmContainer {
 
   async onMessage (message) {
     this.funcRef = message.funcRef
-    this.instance = WebAssembly.Instance(this.mod, this.interface)
+    this.instance = new WebAssembly.Instance(this.mod, this.interface)
     const state = this.json.persist.map((entry, index) => {
       const obj = this.actor.storage[index]
       if (entry.type === 'anyref') {
@@ -333,7 +333,7 @@ module.exports = class WasmContainer {
     const module = this.actor.module
     const code = module[1][1]['/']
     const {json, wasm, exports, state} = WasmContainer.createModule(code)
-    this.mod = WebAssembly.Module(wasm)
+    this.mod = new WebAssembly.Module(wasm)
     this.json = json
     const moduleID = new ID(module[1][0])
     const modRef = new ModuleRef(moduleID, WasmContainer.typeId, exports, state, code)
