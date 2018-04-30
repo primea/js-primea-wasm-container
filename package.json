@@ -26,7 +26,7 @@
     "dfinity-radix-tree": "0.2.2",
     "level-browserify": "^1.1.2",
     "nyc": "^11.7.1",
-    "primea-hypervisor": "git+ssh://git@github.com/dfinity/js-primea.git#actorRef",
+    "primea-hypervisor": "^0.8.0",
     "standard": "^11.0.1",
     "tape": "^4.9.0",
     "wabt": "^1.0.0"
