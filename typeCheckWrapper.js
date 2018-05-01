@@ -90,7 +90,7 @@ module.exports = function (params) {
     }]
   }]
 
-  const definedTypes = new Set(['anyref', 'module', 'func', 'data', 'elem', 'link', 'id'])
+  const definedTypes = new Set(['anyref', 'actor', 'module', 'func', 'data', 'elem', 'link', 'id'])
   const setGlobals = []
   const importType = module[1].entries[0].params
   const checkType = module[1].entries[1].params
