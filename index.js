@@ -265,7 +265,7 @@ module.exports = class WasmContainer {
     if (this.funcRef.params == null) {
       throw new Error(`function "${this.funcRef.identifier[1]}" not found`)
     }
-    if (this.funcRef.params.length > message.funcArguments) {
+    if (this.funcRef.params.length > message.funcArguments.length) {
       throw new Error(`argument mismatch, want: [${this.funcRef.params}]`)
     }
     this.funcRef.params.forEach(type => {
