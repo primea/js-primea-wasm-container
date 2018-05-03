@@ -27,17 +27,17 @@
   ],
   "devDependencies": {
     "coveralls": "^3.0.0",
-    "dfinity-radix-tree": "0.2.2",
+    "dfinity-radix-tree": "^0.2.3",
     "level-browserify": "^1.1.2",
     "nyc": "^11.7.1",
-    "primea-hypervisor": "^0.8.0",
+    "primea-hypervisor": "^0.8.1",
     "standard": "^11.0.1",
     "tape": "^4.9.0",
     "wabt": "^1.0.0"
   },
   "dependencies": {
     "primea-annotations": "0.0.8",
-    "primea-objects": "0.0.8",
+    "primea-objects": "0.0.9",
     "reference-map": "^1.2.7",
     "wasm-json-toolkit": "^0.3.0",
     "wasm-metering": "^0.2.1",
