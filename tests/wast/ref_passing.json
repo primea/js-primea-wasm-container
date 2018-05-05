@@ -1,0 +1,21 @@
+{
+  "types": [{
+    "form": "func",
+    "params": [
+      "anyref"
+    ]
+  }, {
+    "form": "func",
+    "params": [
+      "func",
+      "anyref"
+    ]
+  }],
+  "typeMap": [{
+    "func": 0,
+    "type": 0
+  }, {
+    "func": 1,
+    "type": 1
+  }]
+}

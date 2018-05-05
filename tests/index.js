@@ -460,3 +460,38 @@ tape('persistent globals', async t => {
 
   t.end()
 })
+
+tape('ref passing', async t => {
+  tester = t
+  const tree = new RadixTree({db})
+  const wasm = fs.readFileSync(WASM_PATH + '/ref_passing.wasm')
+
+  const egress = new EgressDriver()
+
+  egress.on('message', msg => {
+    t.equals(msg.funcArguments[0].toString(), 'hello world')
+    t.end()
+  })
+
+  const hypervisor = new Hypervisor({
+    tree,
+    meter: false,
+    drivers: [egress],
+    modules: [TestWasmModule]
+  })
+
+  const actorRef1 = await hypervisor.newActor(TestWasmModule, wasm)
+  const actorRef2 = await hypervisor.newActor(TestWasmModule, wasm)
+  const funcRef = actorRef1.getFuncRef('main')
+
+  const message = new Message({
+    funcRef,
+    funcArguments: [new FunctionRef({
+      actorID: egress.id,
+      params: ['data']
+    }), actorRef2]
+  })
+
+  hypervisor.send(message)
+  await hypervisor.createStateRoot()
+})

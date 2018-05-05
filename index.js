@@ -19,6 +19,9 @@ function getWasmExports (json) {
 }
 
 function generateWrapper (funcRef, container) {
+  // if wrapper is cached, this saves the container context
+  funcRef.getContainer = () => container
+
   // check if the wrapper has been generated
   if (funcRef.wrapper) {
     return funcRef.wrapper
@@ -33,6 +36,8 @@ function generateWrapper (funcRef, container) {
   wrapper = new WebAssembly.Instance(mod, {
     'env': {
       'checkTypes': function () {
+        const container = funcRef.getContainer()
+
         const args = [...arguments]
         const checkedArgs = []
         while (args.length) {
