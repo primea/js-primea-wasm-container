@@ -8,7 +8,7 @@ const typeCheckWrapper = require('./typeCheckWrapper.js')
 
 const Debug = require('debug')
 const debug = [
-  'lifecycle:create',
+  'lifecycle:createModule',
   'api:call internalized',
   'api:func.externalize',
   'api:func.internalize',
@@ -274,7 +274,6 @@ module.exports = class WasmContainer {
     // recompile the wasm
     wasm = json2wasm(moduleJSON)
     const globals = []
-    debug['lifecycle:create'](`persist globals: [${json.persist.map(g => g.index)}]`)
     json.persist.map(global => global.index).forEach(index => {
       globals[index] = true
     })
@@ -285,6 +284,9 @@ module.exports = class WasmContainer {
       globals
     })
     const exports = getWasmExports(json)
+
+    debug['lifecycle:createModule'](`persist globals: [${json.persist.map(g => g.index)}]`)
+
     return {
       wasm,
       json,
