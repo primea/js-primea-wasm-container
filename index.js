@@ -24,7 +24,7 @@ const debug = [
   'api:data.length',
   'api:elem.externalize',
   'api:elem.internalize',
-  'api:elem.length',
+  'api:elem.length'
 ].reduce((acc, curr) => {
   acc[curr] = Debug(curr)
   return acc
