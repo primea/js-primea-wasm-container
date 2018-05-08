@@ -5,7 +5,30 @@ const persist = require('wasm-persist')
 const wasmMetering = require('wasm-metering')
 const ReferenceMap = require('reference-map')
 const typeCheckWrapper = require('./typeCheckWrapper.js')
-const debug = require('debug')('wasm-container')
+
+const Debug = require('debug')
+const debug = [
+  'lifecycle:create',
+  'api:call internalized',
+  'api:func.externalize',
+  'api:func.internalize',
+  'api:link.wrap',
+  'api:link.unwrap',
+  'api:module.new',
+  'api:actor.new',
+  'api:actor.export',
+  'api:actor.is_instance',
+  'api:actor.self',
+  'api:data.externalize',
+  'api:data.internalize',
+  'api:data.length',
+  'api:elem.externalize',
+  'api:elem.internalize',
+  'api:elem.length',
+].reduce((acc, curr) => {
+  acc[curr] = Debug(curr)
+  return acc
+}, {})
 
 const nativeTypes = new Set(['i32', 'i64', 'f32', 'f64'])
 const FUNC_INDEX_OFFSET = 1
@@ -39,7 +62,8 @@ function generateWrapper (funcRef, container) {
       'checkTypes': function () {
         const container = funcRef.getContainer()
 
-        debug(`${container.actorSelf.id} : call internalized`, self)
+        debug['api:call internalized'](`by ${container.actorSelf.id}`)
+        debug['api:call internalized'](self.toJSON())
 
         const args = [...arguments]
         const checkedArgs = []
@@ -80,15 +104,16 @@ module.exports = class WasmContainer {
     this.interface = {
       func: {
         externalize: index => {
+          debug['api:func.externalize'](`by ${self.actorSelf.id} (index=${index})`)
           if (!self.instance.exports.table) {
             throw new Error('no table exported')
           }
 
           const func = self.instance.exports.table.get(index)
-          debug(func)
+          debug['api:func.externalize'](func)
           const object = func.object
           if (object) {
-            // externalize a pervously internalized function
+            // externalize a previously internalized function
             return self.refs.add(object)
           } else {
             const params = self.json.types[self.json.indexes[func.name - FUNC_INDEX_OFFSET]].params
@@ -101,8 +126,9 @@ module.exports = class WasmContainer {
           }
         },
         internalize: (index, ref) => {
+          debug['api:func.internalize'](`by ${self.actorSelf.id} (index=${index}, ref=${ref})`)
           const funcRef = self.refs.get(ref, 'func')
-          debug(funcRef)
+          debug['api:func.internalize'](funcRef.toJSON())
           const wrapper = generateWrapper(funcRef, self)
           self.instance.exports.table.set(index, wrapper.exports.check)
         },
@@ -118,16 +144,19 @@ module.exports = class WasmContainer {
       },
       link: {
         wrap: ref => {
+          debug['api:link.wrap'](`by ${self.actorSelf.id} (ref=${ref})`)
           const obj = self.refs.get(ref)
           const link = {'/': obj}
-          debug(link)
+          debug['api:link.wrap'](link)
           return self.refs.add(link, 'link')
         },
         unwrap: async (ref, cb) => {
+          debug['api:link.unwrap'](`by ${self.actorSelf.id} (ref=${ref})`)
           const link = self.refs.get(ref, 'link')
           const promise = self.actor.tree.graph.tree(link)
           await self.pushOpsQueue(promise)
-          debug(link)
+          debug['api:link.unwrap'](`by ${self.actorSelf.id}`)
+          debug['api:link.unwrap'](link)
           const obj = link['/']
           const linkRef = self.refs.add(obj, getType(obj))
           self.instance.exports.table.get(cb)(linkRef)
@@ -135,58 +164,69 @@ module.exports = class WasmContainer {
       },
       module: {
         new: dataRef => {
+          debug['api:module.new'](`by ${self.actorSelf.id} (dataRef=${dataRef})`)
           const bin = self.refs.get(dataRef, 'data')
           const mod = self.actor.createModule(WasmContainer, bin)
-          debug(mod)
+          debug['api:module.new'](mod.toJSON())
           return self.refs.add(mod, 'mod')
         }
       },
       actor: {
         new: modRef => {
+          debug['api:actor.new'](`by ${self.actorSelf.id} (modRef=${modRef})`)
           const module = self.refs.get(modRef, 'mod')
-          debug(module)
+          debug['api:actor.new'](module.toJSON())
           const actor = self.actor.createActor(module)
-          debug(actor)
+          debug['api:actor.new'](actor.toJSON())
           return self.refs.add(actor, 'actor')
         },
         export: (actorRef, dataRef) => {
+          debug['api:actor.export'](`by ${self.actorSelf.id} (actorRef=${actorRef}, dataRef=${dataRef})`)
           const actor = self.refs.get(actorRef, 'actor')
           let name = self.refs.get(dataRef, 'data')
           name = Buffer.from(name).toString()
           const funcRef = actor.getFuncRef(name)
-          debug(funcRef)
+          debug['api:actor.export'](funcRef.toJSON())
           return self.refs.add(funcRef, 'func')
         },
         is_instance: (actorRef, modRef) => {
+          debug['api:actor.is_instance'](`by ${self.actorSelf.id} (actorRef=${actorRef}, modRef=${modRef})`)
           const actor = self.refs.get(actorRef, 'actor')
+          debug['api:actor.is_instance'](actor.toJSON())
           const module = self.refs.get(modRef, 'mod')
+          debug['api:actor.is_instance'](module.toJSON())
           return actor.modRef.id.id.equals(module.id.id)
         },
         self: () => {
+          debug['api:actor.self'](this.actorSelf.toJSON())
           return self.refs.add(this.actorSelf, 'actor')
         }
       },
       data: {
         externalize: (index, length) => {
+          debug['api:data.externalize'](`by ${self.actorSelf.id} (index=${index}, length=${length})`)
           const data = Buffer.from(this.get8Memory(index, length))
-          debug(data)
+          debug['api:data.externalize'](data)
           return self.refs.add(data, 'data')
         },
         internalize: (sinkOffset, length, dataRef, srcOffset) => {
+          debug['api:data.internalize'](`by ${self.actorSelf.id} (sinkOffset=${sinkOffset}, length=${length}, dataRef=${dataRef}, srcOffset=${srcOffset})`)
           let data = self.refs.get(dataRef, 'data')
-          debug(data)
+          debug['api:data.internalize'](data)
           data = data.subarray(srcOffset, length)
           const mem = self.get8Memory(sinkOffset, data.length)
           mem.set(data)
         },
         length (dataRef) {
+          debug['api:data.length'](`by ${self.actorSelf.id} (dataRef=${dataRef})`)
           let data = self.refs.get(dataRef, 'data')
-          debug(data)
+          debug['api:data.length'](data)
           return data.length
         }
       },
       elem: {
         externalize: (index, length) => {
+          debug['api:elem.externalize'](`by ${self.actorSelf.id} (index=${index}, length=${length})`)
           const mem = Buffer.from(this.get8Memory(index, length * 4))
           const objects = []
           while (length--) {
@@ -194,57 +234,27 @@ module.exports = class WasmContainer {
             const obj = self.refs.get(ref)
             objects.unshift(obj)
           }
-          debug(objects)
+          debug['api:elem.externalize'](objects)
           return this.refs.add(objects, 'elem')
         },
         internalize: (sinkOffset, length, elemRef, srcOffset) => {
+          debug['api:elem.internalize'](`by ${self.actorSelf.id} (sinkOffset=${sinkOffset}, length=${length}, elemRef=${elemRef}, srcOffset=${srcOffset})`)
           let table = self.refs.get(elemRef, 'elem')
           const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj, getType(obj)))
-          debug(buf)
+          debug['api:elem.internalize'](buf)
           const mem = self.get32Memory(sinkOffset, length)
           mem.set(buf)
         },
         length (elemRef) {
+          debug['api:elem.length'](`by ${self.actorSelf.id} (elemRef=${elemRef})`)
           let elem = self.refs.get(elemRef, 'elem')
-          debug(elem)
+          debug['api:elem.length'](elem)
           return elem.length
         }
       },
       metering: {
         usegas: amount => {
           self.actor.incrementTicks(amount)
-        }
-      }
-    }
-
-    // create proxy for interface for debugging
-    if (debug.enabled) {
-      this._interface = this.interface
-      this.interface = {}
-
-      for (let [k1, v] of Object.entries(this._interface)) {
-        this.interface[k1] = {}
-        for (let [k2, func] of Object.entries(v)) {
-          this.interface[k1][k2] = new Proxy(func, {
-            apply: (target, thisArg, args) => {
-              if (k1 !== 'metering') {
-                debug(`${self.actorSelf.id} : ${k1}.${k2}(${args})`)
-              }
-
-              let res, err
-              try {
-                res = target.apply(thisArg, args)
-              } catch (e) {
-                err = e
-              }
-
-              if (k1 !== 'metering') {
-                debug(`-> ${err ? err.toString() : (res == null ? '()' : res)}`)
-              }
-              if (err) { throw err }
-              return res
-            }
-          })
         }
       }
     }
@@ -264,6 +274,7 @@ module.exports = class WasmContainer {
     // recompile the wasm
     wasm = json2wasm(moduleJSON)
     const globals = []
+    debug['lifecycle:create'](`persist globals: [${json.persist.map(g => g.index)}]`)
     json.persist.map(global => global.index).forEach(index => {
       globals[index] = true
     })
