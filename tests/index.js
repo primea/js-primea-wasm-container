@@ -318,7 +318,7 @@ tape('is instance', async t => {
   const message = new Message({
     funcRef,
     funcArguments: [receiver, new FunctionRef({
-      actorID: egress.id,
+      actorId: egress.id,
       params: ['data']
     })]
   })
@@ -363,7 +363,7 @@ tape('link', async t => {
   const message2 = new Message({
     funcRef: funcRef2,
     funcArguments: [new FunctionRef({
-      actorID: egress.id,
+      actorId: egress.id,
       params: ['data']
     })]
   })
@@ -487,7 +487,7 @@ tape('ref passing', async t => {
   const message = new Message({
     funcRef,
     funcArguments: [new FunctionRef({
-      actorID: egress.id,
+      actorId: egress.id,
       params: ['data']
     }), actorRef2]
   })

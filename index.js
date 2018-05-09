@@ -120,7 +120,7 @@ module.exports = class WasmContainer {
             const ref = new FunctionRef({
               identifier: [true, func.tableIndex],
               params,
-              actorID: self.actor.id
+              actorId: self.actor.id
             })
             return self.refs.add(ref, 'func')
           }
