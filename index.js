@@ -1,4 +1,5 @@
 const { ID, Message, FunctionRef, ModuleRef, ActorRef, getType } = require('primea-objects')
+const { toJSON } = require('primea-objects/utils')
 const { wasm2json, json2wasm } = require('wasm-json-toolkit')
 const annotations = require('primea-annotations')
 const persist = require('wasm-persist')
@@ -104,7 +105,7 @@ module.exports = class WasmContainer {
     this.interface = {
       func: {
         externalize: index => {
-          debug['api:func.externalize'](`by ${self.actorSelf.id} (index=${index})`)
+          debug['api:func.externalize'](`by ${self.actorSelf.id.toJSON()} (index=${index})`)
           if (!self.instance.exports.table) {
             throw new Error('no table exported')
           }
@@ -126,7 +127,7 @@ module.exports = class WasmContainer {
           }
         },
         internalize: (index, ref) => {
-          debug['api:func.internalize'](`by ${self.actorSelf.id} (index=${index}, ref=${ref})`)
+          debug['api:func.internalize'](`by ${self.actorSelf.id.toJSON()} (index=${index}, ref=${ref})`)
           const funcRef = self.refs.get(ref, 'func')
           debug['api:func.internalize'](funcRef.toJSON())
           const wrapper = generateWrapper(funcRef, self)
@@ -144,18 +145,18 @@ module.exports = class WasmContainer {
       },
       link: {
         wrap: ref => {
-          debug['api:link.wrap'](`by ${self.actorSelf.id} (ref=${ref})`)
+          debug['api:link.wrap'](`by ${self.actorSelf.id.toJSON()} (ref=${ref})`)
           const obj = self.refs.get(ref)
           const link = {'/': obj}
           debug['api:link.wrap'](link)
           return self.refs.add(link, 'link')
         },
         unwrap: async (ref, cb) => {
-          debug['api:link.unwrap'](`by ${self.actorSelf.id} (ref=${ref})`)
+          debug['api:link.unwrap'](`by ${self.actorSelf.id.toJSON()} (ref=${ref})`)
           const link = self.refs.get(ref, 'link')
           const promise = self.actor.tree.graph.tree(link)
           await self.pushOpsQueue(promise)
-          debug['api:link.unwrap'](`by ${self.actorSelf.id}`)
+          debug['api:link.unwrap'](`by ${self.actorSelf.id.toJSON()}`)
           debug['api:link.unwrap'](link)
           const obj = link['/']
           const linkRef = self.refs.add(obj, getType(obj))
@@ -164,24 +165,24 @@ module.exports = class WasmContainer {
       },
       module: {
         new: dataRef => {
-          debug['api:module.new'](`by ${self.actorSelf.id} (dataRef=${dataRef})`)
+          debug['api:module.new'](`by ${self.actorSelf.id.toJSON()} (dataRef=${dataRef})`)
           const bin = self.refs.get(dataRef, 'data')
           const mod = self.actor.createModule(WasmContainer, bin)
-          debug['api:module.new'](mod.toJSON())
+          debug['api:module.new'](mod.toJSON(false))
           return self.refs.add(mod, 'mod')
         }
       },
       actor: {
         new: modRef => {
-          debug['api:actor.new'](`by ${self.actorSelf.id} (modRef=${modRef})`)
+          debug['api:actor.new'](`by ${self.actorSelf.id.toJSON()} (modRef=${modRef})`)
           const module = self.refs.get(modRef, 'mod')
-          debug['api:actor.new'](module.toJSON())
+          debug['api:actor.new'](module.toJSON(false))
           const actor = self.actor.createActor(module)
-          debug['api:actor.new'](actor.toJSON())
+          debug['api:actor.new'](actor.toJSON(false))
           return self.refs.add(actor, 'actor')
         },
         export: (actorRef, dataRef) => {
-          debug['api:actor.export'](`by ${self.actorSelf.id} (actorRef=${actorRef}, dataRef=${dataRef})`)
+          debug['api:actor.export'](`by ${self.actorSelf.id.toJSON()} (actorRef=${actorRef}, dataRef=${dataRef})`)
           const actor = self.refs.get(actorRef, 'actor')
           let name = self.refs.get(dataRef, 'data')
           name = Buffer.from(name).toString()
@@ -190,43 +191,43 @@ module.exports = class WasmContainer {
           return self.refs.add(funcRef, 'func')
         },
         is_instance: (actorRef, modRef) => {
-          debug['api:actor.is_instance'](`by ${self.actorSelf.id} (actorRef=${actorRef}, modRef=${modRef})`)
+          debug['api:actor.is_instance'](`by ${self.actorSelf.id.toJSON()} (actorRef=${actorRef}, modRef=${modRef})`)
           const actor = self.refs.get(actorRef, 'actor')
-          debug['api:actor.is_instance'](actor.toJSON())
+          debug['api:actor.is_instance'](actor.toJSON(false))
           const module = self.refs.get(modRef, 'mod')
-          debug['api:actor.is_instance'](module.toJSON())
+          debug['api:actor.is_instance'](module.toJSON(false))
           return actor.modRef.id.id.equals(module.id.id)
         },
         self: () => {
-          debug['api:actor.self'](this.actorSelf.toJSON())
+          debug['api:actor.self'](this.actorSelf.toJSON(false))
           return self.refs.add(this.actorSelf, 'actor')
         }
       },
       data: {
         externalize: (index, length) => {
-          debug['api:data.externalize'](`by ${self.actorSelf.id} (index=${index}, length=${length})`)
+          debug['api:data.externalize'](`by ${self.actorSelf.id.toJSON()} (index=${index}, length=${length})`)
           const data = Buffer.from(this.get8Memory(index, length))
-          debug['api:data.externalize'](data)
+          debug['api:data.externalize'](toJSON(data))
           return self.refs.add(data, 'data')
         },
         internalize: (sinkOffset, length, dataRef, srcOffset) => {
-          debug['api:data.internalize'](`by ${self.actorSelf.id} (sinkOffset=${sinkOffset}, length=${length}, dataRef=${dataRef}, srcOffset=${srcOffset})`)
+          debug['api:data.internalize'](`by ${self.actorSelf.id.toJSON()} (sinkOffset=${sinkOffset}, length=${length}, dataRef=${dataRef}, srcOffset=${srcOffset})`)
           let data = self.refs.get(dataRef, 'data')
-          debug['api:data.internalize'](data)
+          debug['api:data.internalize'](toJSON(data))
           data = data.subarray(srcOffset, length)
           const mem = self.get8Memory(sinkOffset, data.length)
           mem.set(data)
         },
         length (dataRef) {
-          debug['api:data.length'](`by ${self.actorSelf.id} (dataRef=${dataRef})`)
+          debug['api:data.length'](`by ${self.actorSelf.id.toJSON()} (dataRef=${dataRef})`)
           let data = self.refs.get(dataRef, 'data')
-          debug['api:data.length'](data)
+          debug['api:data.length'](toJSON(data))
           return data.length
         }
       },
       elem: {
         externalize: (index, length) => {
-          debug['api:elem.externalize'](`by ${self.actorSelf.id} (index=${index}, length=${length})`)
+          debug['api:elem.externalize'](`by ${self.actorSelf.id.toJSON()} (index=${index}, length=${length})`)
           const mem = Buffer.from(this.get8Memory(index, length * 4))
           const objects = []
           while (length--) {
@@ -234,21 +235,21 @@ module.exports = class WasmContainer {
             const obj = self.refs.get(ref)
             objects.unshift(obj)
           }
-          debug['api:elem.externalize'](objects)
+          debug['api:elem.externalize'](toJSON(objects, false))
           return this.refs.add(objects, 'elem')
         },
         internalize: (sinkOffset, length, elemRef, srcOffset) => {
-          debug['api:elem.internalize'](`by ${self.actorSelf.id} (sinkOffset=${sinkOffset}, length=${length}, elemRef=${elemRef}, srcOffset=${srcOffset})`)
+          debug['api:elem.internalize'](`by ${self.actorSelf.id.toJSON()} (sinkOffset=${sinkOffset}, length=${length}, elemRef=${elemRef}, srcOffset=${srcOffset})`)
           let table = self.refs.get(elemRef, 'elem')
           const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj, getType(obj)))
-          debug['api:elem.internalize'](buf)
+          debug['api:elem.internalize'](toJSON(buf, false))
           const mem = self.get32Memory(sinkOffset, length)
           mem.set(buf)
         },
         length (elemRef) {
-          debug['api:elem.length'](`by ${self.actorSelf.id} (elemRef=${elemRef})`)
+          debug['api:elem.length'](`by ${self.actorSelf.id.toJSON()} (elemRef=${elemRef})`)
           let elem = self.refs.get(elemRef, 'elem')
-          debug['api:elem.length'](elem)
+          debug['api:elem.length'](toJSON(elem, false))
           return elem.length
         }
       },
@@ -285,7 +286,7 @@ module.exports = class WasmContainer {
     })
     const exports = getWasmExports(json)
 
-    debug['lifecycle:createModule'](`persist globals: [${json.persist.map(g => g.index)}]`)
+    // debug['lifecycle:createModule'](`persist globals: [${json.persist.map(g => g.index)}]`)
 
     return {
       wasm,
