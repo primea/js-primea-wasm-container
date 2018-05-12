@@ -214,7 +214,7 @@ module.exports = class WasmContainer {
           debug['api:data.internalize'](`by ${self.actorSelf.id.toJSON()} (sinkOffset=${sinkOffset}, length=${length}, dataRef=${dataRef}, srcOffset=${srcOffset})`)
           let data = self.refs.get(dataRef, 'data')
           debug['api:data.internalize'](toJSON(data))
-          data = data.subarray(srcOffset, length)
+          data = data.subarray(srcOffset, srcOffset + length)
           const mem = self.get8Memory(sinkOffset, data.length)
           mem.set(data)
         },
@@ -327,9 +327,6 @@ module.exports = class WasmContainer {
         }
       }
     }
-    // import references
-    let index = 0
-    const args = []
 
     if (this.funcRef.params == null) {
       throw new Error(`function "${this.funcRef.identifier[1]}" not found`)
@@ -337,6 +334,11 @@ module.exports = class WasmContainer {
     if (this.funcRef.params.length > message.funcArguments.length) {
       throw new Error(`argument mismatch, want: [${this.funcRef.params}]`)
     }
+
+    // import references
+    let index = 0
+    const args = []
+
     this.funcRef.params.forEach(type => {
       const arg = message.funcArguments[index]
       if (nativeTypes.has(type)) {
