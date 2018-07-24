@@ -206,6 +206,7 @@ module.exports = class WasmContainer {
       data: {
         externalize: (index, length) => {
           debug['api:data.externalize'](`by ${self.actorSelf.id.toJSON()} (index=${index}, length=${length})`)
+          length = Math.max(0, length)
           const data = Buffer.from(this.get8Memory(index, length))
           debug['api:data.externalize'](toJSON(data))
           return self.refs.add(data, 'data')
@@ -214,6 +215,7 @@ module.exports = class WasmContainer {
           debug['api:data.internalize'](`by ${self.actorSelf.id.toJSON()} (sinkOffset=${sinkOffset}, length=${length}, dataRef=${dataRef}, srcOffset=${srcOffset})`)
           let data = self.refs.get(dataRef, 'data')
           debug['api:data.internalize'](toJSON(data))
+          length = Math.min(Math.max(0, length), data.length)
           data = data.subarray(srcOffset, srcOffset + length)
           const mem = self.get8Memory(sinkOffset, data.length)
           mem.set(data)
@@ -241,6 +243,7 @@ module.exports = class WasmContainer {
         internalize: (sinkOffset, length, elemRef, srcOffset) => {
           debug['api:elem.internalize'](`by ${self.actorSelf.id.toJSON()} (sinkOffset=${sinkOffset}, length=${length}, elemRef=${elemRef}, srcOffset=${srcOffset})`)
           let table = self.refs.get(elemRef, 'elem')
+          length = Math.min(Math.max(0, length), table.length)
           const buf = table.slice(srcOffset, srcOffset + length).map(obj => self.refs.add(obj, getType(obj)))
           debug['api:elem.internalize'](toJSON(buf, false))
           const mem = self.get32Memory(sinkOffset, length)

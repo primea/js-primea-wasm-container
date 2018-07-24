@@ -4,6 +4,7 @@
   (import "elem" "internalize" (func $internalize (param i32 i32 i32 i32)))
   (memory (export "memory") 1)
   (data (i32.const 0) "test")
+  (data (i32.const 16) "rest")
   (func $test
     (i32.store
       (i32.const 0)
@@ -12,9 +13,9 @@
       (i32.const 4)
       (call $mem_externalize (i32.const 0)  (i32.const 4)))
 
-    (call $internalize 
-        (i32.const 8) 
-        (i32.const 2) 
+    (call $internalize
+        (i32.const 8)
+        (i32.const 100)
         (call $externalize
           (i32.const 0)
           (i32.const 2))
