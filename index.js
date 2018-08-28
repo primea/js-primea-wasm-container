@@ -32,7 +32,7 @@ const debug = [
 }, {})
 
 const nativeTypes = new Set(['i32', 'i64', 'f32', 'f64'])
-const FUNC_INDEX_OFFSET = 1
+const METERING_FUNC_INDEX_OFFSET = 1
 
 function getWasmExports (json) {
   const exports = {}
@@ -117,12 +117,15 @@ module.exports = class WasmContainer {
             // externalize a previously internalized function
             return self.refs.add(object)
           } else {
-            const params = self.json.types[self.json.indexes[func.name - FUNC_INDEX_OFFSET]].params
+            // if metering, indexes are offset by 1
+            const offset = this.actor.hypervisor.meter ? METERING_FUNC_INDEX_OFFSET : 0
+            const params = self.json.types[self.json.indexes[func.name - offset]].params
             const ref = new FunctionRef({
               identifier: [true, func.tableIndex],
               params,
               actorId: self.actor.id
             })
+            debug['api:func.externalize'](ref.toJSON())
             return self.refs.add(ref, 'func')
           }
         },
@@ -264,19 +267,22 @@ module.exports = class WasmContainer {
     }
   }
 
-  static createModule (wasm) {
+  static createModule (wasm, meter=true) {
     if (!WebAssembly.validate(wasm)) {
       throw new Error('invalid wasm binary')
     }
 
     let moduleJSON = wasm2json(wasm)
     const json = annotations.mergeTypeSections(moduleJSON)
-    moduleJSON = wasmMetering.meterJSON(moduleJSON, {
-      meterType: 'i32'
-    })
 
-    // recompile the wasm
-    wasm = json2wasm(moduleJSON)
+    if (meter) {
+      moduleJSON = wasmMetering.meterJSON(moduleJSON, {
+        meterType: 'i32'
+      })
+      // recompile the wasm
+      wasm = json2wasm(moduleJSON)
+    }
+
     const globals = []
     json.persist.map(global => global.index).forEach(index => {
       globals[index] = true
@@ -288,8 +294,6 @@ module.exports = class WasmContainer {
       globals
     })
     const exports = getWasmExports(json)
-
-    // debug['lifecycle:createModule'](`persist globals: [${json.persist.map(g => g.index)}]`)
 
     return {
       wasm,
@@ -303,8 +307,8 @@ module.exports = class WasmContainer {
     }
   }
 
-  static onCreation (unverifiedWasm) {
-    return this.createModule(unverifiedWasm)
+  static onCreation (...args) {
+    return this.createModule(...args)
   }
 
   async onMessage (message) {
@@ -406,7 +410,7 @@ module.exports = class WasmContainer {
   async onStartup () {
     const module = this.actor.module
     const code = module[1][1]['/']
-    const {json, wasm, exports, state} = WasmContainer.createModule(code)
+    const {json, wasm, exports, state} = WasmContainer.createModule(code, this.actor.hypervisor.meter)
     this.mod = new WebAssembly.Module(wasm)
     this.json = json
     const moduleID = new ID(module[1][0])
