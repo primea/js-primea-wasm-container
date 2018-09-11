@@ -36,7 +36,7 @@
     "wabt": "^1.0.0"
   },
   "dependencies": {
-    "debug": "^3.1.0",
+    "debug": "^3.2.2",
     "primea-annotations": "0.0.10",
     "primea-objects": "0.1.1",
     "reference-map": "^1.2.7",
