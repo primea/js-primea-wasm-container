@@ -267,7 +267,7 @@ module.exports = class WasmContainer {
     }
   }
 
-  static createModule (wasm, meter=true) {
+  static createModule (wasm, meter = true) {
     if (!WebAssembly.validate(wasm)) {
       throw new Error('invalid wasm binary')
     }
