@@ -39,7 +39,7 @@
     "debug": "^3.1.0",
     "primea-annotations": "0.0.10",
     "primea-objects": "0.1.2",
-    "reference-map": "^1.2.7",
+    "reference-map": "^1.2.8",
     "wasm-json-toolkit": "^0.2.6",
     "wasm-metering": "^0.2.1",
     "wasm-persist": "0.0.3"
