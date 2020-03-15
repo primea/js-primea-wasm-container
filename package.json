@@ -33,7 +33,7 @@
     "primea-hypervisor": "^0.9.2",
     "standard": "^11.0.1",
     "tape": "^4.9.0",
-    "wabt": "^1.0.0"
+    "wabt": "^1.0.13"
   },
   "dependencies": {
     "debug": "^3.1.0",
